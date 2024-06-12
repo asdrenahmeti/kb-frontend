@@ -78,14 +78,12 @@ const Page: React.FC = () => {
   const [cancelDrag, setCancelDrag] = useState<boolean>(false);
   const [resetPosition, setResetPosition] = useState<boolean>(false);
 
-  console.log('START HOUR', startHour);
-
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
     onSuccess: res => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
-      console.log('Booking updated successfully:', res.data);
+      // console.log('Booking updated successfully:', res.data);
     },
     onError: error => {
       if (axios.isAxiosError(error) && error.response) {
@@ -101,7 +99,7 @@ const Page: React.FC = () => {
 
   const handleConfirmDrag = (newBooking: NewBookingData) => {
     setShowDragConfirmModal(false);
-    console.log('Confirmed new booking:', newBooking);
+    // console.log('Confirmed new booking:', newBooking);
     setCancelDrag(false);
     setResetPosition(false);
 
@@ -179,8 +177,6 @@ const Page: React.FC = () => {
     }
   };
 
-  console.log('ACTIVE', activeBooking);
-
   const { data, isFetching } = useQuery({
     queryKey: ['bookings', date, selectedSite],
     queryFn: fetchData,
@@ -243,22 +239,22 @@ const Page: React.FC = () => {
     const initialLeft =
       (initialMinutesFromStart / timeIntervalInMinutes) * boxWidth;
 
-    console.log('Initial Minutes from Start:', initialMinutesFromStart);
-    console.log('Initial Left Position:', initialLeft);
+    // console.log('Initial Minutes from Start:', initialMinutesFromStart);
+    // console.log('Initial Left Position:', initialLeft);
 
     const relativePositionX = momentaryPosition.x;
-    console.log('Relative Position X:', relativePositionX);
+    // console.log('Relative Position X:', relativePositionX);
 
     const totalMinutesFromStart =
       initialMinutesFromStart +
       (relativePositionX / boxWidth) * timeIntervalInMinutes;
-    console.log('Total Minutes from Start:', totalMinutesFromStart);
+    // console.log('Total Minutes from Start:', totalMinutesFromStart);
 
     const momentaryTime = startDateTime.plus({
       minutes: totalMinutesFromStart
     });
 
-    console.log('Momentary Time:', momentaryTime.toString());
+    // console.log('Momentary Time:', momentaryTime.toString());
 
     const endDateTime = DateTime.fromFormat(endHour, 'HH:mm', { zone: 'utc' });
 
@@ -278,7 +274,7 @@ const Page: React.FC = () => {
       roomId: roomId
     };
 
-    console.log('New Booking:', newBooking);
+    // console.log('New Booking:', newBooking);
 
     setDraggedBooking({
       old: {

@@ -65,7 +65,6 @@ const AddBooking = ({ bookingModal, setBookingModal, booking }: Props) => {
     },
     onError: (error: AxiosError) => {
       if (error.response) {
-        console.log(error.response.data);
         toast.error(
           `${(error?.response?.data as { message?: string })?.message}`,
           {
@@ -73,7 +72,7 @@ const AddBooking = ({ bookingModal, setBookingModal, booking }: Props) => {
           }
         );
       } else {
-        console.log('An error occurred:', error.message);
+        // console.log('An error occurred:', error.message);
       }
     },
     mutationFn: booking => {
