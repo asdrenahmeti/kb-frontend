@@ -45,7 +45,9 @@ const AddBooking = ({ bookingModal, setBookingModal, booking }: Props) => {
   } = useQuery({
     queryKey: ['menus'],
     queryFn: () =>
-      axios.get('http://localhost:3000/menus').then(res => res.data)
+      axios
+        .get(`${process.env.NEXT_PUBLIC_BASE_URL}/menus`)
+        .then(res => res.data)
   });
 
   const mutation = useMutation({
@@ -76,7 +78,10 @@ const AddBooking = ({ bookingModal, setBookingModal, booking }: Props) => {
       }
     },
     mutationFn: booking => {
-      return axios.post('http://localhost:3000/bookings', booking);
+      return axios.post(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/bookings`,
+        booking
+      );
     }
   });
 

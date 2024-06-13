@@ -45,7 +45,9 @@ const ViewBooking = ({ bookingModal, setBookingModal, id }: Props) => {
   } = useQuery({
     queryKey: ['booking', id],
     queryFn: () =>
-      axios.get(`http://localhost:3000/bookings/${id}`).then(res => res.data)
+      axios
+        .get(`${process.env.NEXT_PUBLIC_BASE_URL}/bookings/${id}`)
+        .then(res => res.data)
   });
 
   // const mutation = useMutation({

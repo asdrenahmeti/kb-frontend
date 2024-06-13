@@ -93,7 +93,10 @@ const Page: React.FC = () => {
       }
     },
     mutationFn: ({ id, ...booking }: BookingData) => {
-      return axios.patch(`http://localhost:3000/bookings/${id}`, booking);
+      return axios.patch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/bookings/${id}`,
+        booking
+      );
     }
   });
 
@@ -165,7 +168,7 @@ const Page: React.FC = () => {
 
     try {
       const res = await axios.get(
-        `http://localhost:3000/bookings?gt=${isoDateString}&siteId=${selectedSite}`
+        `${process.env.NEXT_PUBLIC_BASE_URL}/bookings?gt=${isoDateString}&siteId=${selectedSite}`
       );
       const data = res.data;
       setStartHour(data?.openingHours);
@@ -186,7 +189,9 @@ const Page: React.FC = () => {
   const { data: sitesData } = useQuery({
     queryKey: ['sites'],
     queryFn: () =>
-      axios.get('http://localhost:3000/sites').then(res => res.data)
+      axios
+        .get(`${process.env.NEXT_PUBLIC_BASE_URL}/sites`)
+        .then(res => res.data)
   });
 
   const handleBoxClick = (time: string, roomId: string, roomName: string) => {

@@ -34,7 +34,9 @@ const Page = (props: Props) => {
   const { isPending, error, data, isFetching } = useQuery({
     queryKey: ['sites'],
     queryFn: () =>
-      axios.get('http://localhost:3000/sites').then(res => res.data)
+      axios
+        .get(`${process.env.NEXT_PUBLIC_BASE_URL}/sites`)
+        .then(res => res.data)
   });
   const queryClient = useQueryClient();
 
@@ -61,7 +63,7 @@ const Page = (props: Props) => {
       setSiteModal(false);
     },
     mutationFn: newSite => {
-      return axios.post('http://localhost:3000/sites', {
+      return axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/sites`, {
         newSite,
         name: siteName,
         openingHours: selectedOpening,

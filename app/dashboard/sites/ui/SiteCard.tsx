@@ -55,7 +55,7 @@ const SiteCard = ({
       setOpen(false);
     },
     mutationFn: item => {
-      return axios.delete(`http://localhost:3000/sites/${item}`);
+      return axios.delete(`${process.env.NEXT_PUBLIC_BASE_URL}/sites/${item}`);
     }
   });
 
@@ -70,7 +70,7 @@ const SiteCard = ({
       setEditMode(false);
     },
     mutationFn: editedSite => {
-      return axios.patch(`http://localhost:3000/sites/${id}`, {
+      return axios.patch(`${process.env.NEXT_PUBLIC_BASE_URL}/sites/${id}`, {
         editedSite,
         id: id,
         site_name: siteName

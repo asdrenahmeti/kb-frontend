@@ -78,7 +78,10 @@ const Page = (props: Props) => {
       // You can handle errors here, such as displaying an error message to the user
     },
     mutationFn: formData => {
-      return axios.post('http://localhost:3000/rooms', formData);
+      return axios.post(
+        `${process.env.NEXT_PUBLIC_NEXT_PUBLIC_BASE_URL}/rooms`,
+        formData
+      );
     }
   });
 
@@ -120,7 +123,9 @@ const Page = (props: Props) => {
   } = useQuery({
     queryKey: ['sites'],
     queryFn: () =>
-      axios.get('http://localhost:3000/sites').then(res => res.data)
+      axios
+        .get(`${process.env.NEXT_PUBLIC_BASE_URL}/sites`)
+        .then(res => res.data)
   });
 
   const {
@@ -132,7 +137,7 @@ const Page = (props: Props) => {
     queryKey: ['rooms', selectedSite],
     queryFn: () =>
       axios
-        .get(`http://localhost:3000/sites/${selectedSite}/rooms`)
+        .get(`${process.env.NEXT_PUBLIC_BASE_URL}/sites/${selectedSite}/rooms`)
         .then(res => res.data),
     refetchOnWindowFocus: true,
     enabled: !!selectedSite

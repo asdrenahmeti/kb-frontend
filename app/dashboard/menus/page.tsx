@@ -58,7 +58,7 @@ const Page = (props: Props) => {
       console.error('Error creating menu:', error);
     },
     mutationFn: formData => {
-      return axios.post('http://localhost:3000/menus', formData);
+      return axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/menus`, formData);
     }
   });
 
@@ -79,7 +79,9 @@ const Page = (props: Props) => {
   } = useQuery({
     queryKey: ['menus'],
     queryFn: () =>
-      axios.get('http://localhost:3000/menus').then(res => res.data)
+      axios
+        .get(`${process.env.NEXT_PUBLIC_BASE_URL}/menus`)
+        .then(res => res.data)
   });
 
   const itemType = watch('item_type'); // Watch the item_type value
