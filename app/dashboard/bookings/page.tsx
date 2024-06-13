@@ -69,10 +69,7 @@ const Page: React.FC = () => {
   const [newBooking, setNewBooking] = useState<NewBookingData | null>(null);
   const [activeBooking, setActiveBooking] = useState<any>(null);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
-  const [draggedBooking, setDraggedBooking] = useState<{
-    old: BookingData;
-    new: NewBookingData;
-  } | null>(null);
+  const [draggedBooking, setDraggedBooking] = useState<any>(null);
   const [showDragConfirmModal, setShowDragConfirmModal] =
     useState<boolean>(false);
   const [cancelDrag, setCancelDrag] = useState<boolean>(false);
@@ -100,7 +97,7 @@ const Page: React.FC = () => {
     }
   });
 
-  const handleConfirmDrag = (newBooking: NewBookingData) => {
+  const handleConfirmDrag = (newBooking: any) => {
     setShowDragConfirmModal(false);
     // console.log('Confirmed new booking:', newBooking);
     setCancelDrag(false);

@@ -8,7 +8,7 @@ import {
   HomeIcon,
   UsersIcon
 } from '@heroicons/react/24/outline';
-import { useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import Logo from './../../public/logo.png';
@@ -38,6 +38,8 @@ function classNames(...classes: any) {
 }
 
 export default function DashboardNavigation() {
+  const pathname = usePathname();
+
   return (
     <div className='flex grow flex-col gap-y-5 overflow-y-auto bg-kb-primary min-w-[200px] px-8 h-screen'>
       <div className='flex h-16 shrink-0 items-center justify-center'>
@@ -47,32 +49,36 @@ export default function DashboardNavigation() {
             priority
             alt='Karaokebox Logo'
             className='h-16 ml-auto w-auto object-contain'
-          ></Image>
+          />
         </Link>
       </div>
       <nav className='flex flex-1 flex-col'>
         <ul role='list' className='flex flex-1 flex-col gap-y-7'>
           <li>
             <ul role='list' className='-mx-2 space-y-1'>
-              {navigation.map(item => (
-                <li key={item.name}>
-                  <a
-                    href={item.href}
-                    className={classNames(
-                      item.current
-                        ? 'bg-white text-kb-primary'
-                        : 'text-gray-400 hover:text-white hover:bg-kb-secondary',
-                      'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold'
-                    )}
-                  >
-                    <item.icon
-                      className='h-6 w-6 shrink-0'
-                      aria-hidden='true'
-                    />
-                    {item.name}
-                  </a>
-                </li>
-              ))}
+              {navigation.map(item => {
+                const isActive = pathname === item.href;
+                return (
+                  <li key={item.name}>
+                    <Link href={item.href} legacyBehavior>
+                      <a
+                        className={classNames(
+                          isActive
+                            ? 'bg-white text-kb-primary'
+                            : 'text-gray-400 hover:text-white hover:bg-kb-secondary',
+                          'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold'
+                        )}
+                      >
+                        <item.icon
+                          className='h-6 w-6 shrink-0'
+                          aria-hidden='true'
+                        />
+                        {item.name}
+                      </a>
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </li>
 

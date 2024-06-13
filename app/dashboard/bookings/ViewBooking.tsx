@@ -190,7 +190,7 @@ const ViewBooking = ({ bookingModal, setBookingModal, id }: Props) => {
                 {booking?.menu_orders?.length === 0 ? (
                   <p className='text-sm'>No menu orders</p>
                 ) : (
-                  booking?.menu_orders?.map((item, index) => (
+                  booking?.menu_orders?.map((item: any, index: number) => (
                     <div key={index + 'menu'} className='col-span-2 flex gap-4'>
                       <p className='font-medium'>
                         {item.quantity}x {item?.menu?.name}
@@ -206,7 +206,7 @@ const ViewBooking = ({ bookingModal, setBookingModal, id }: Props) => {
                 <p>
                   {booking?.menu_orders
                     ?.reduce(
-                      (total, item) =>
+                      (total: any, item: any) =>
                         total + item?.menu?.price * item.quantity,
                       0
                     )
