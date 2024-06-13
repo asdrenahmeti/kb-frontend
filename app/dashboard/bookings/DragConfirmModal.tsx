@@ -24,6 +24,7 @@ interface DragConfirmModalProps {
   oldBooking: BookingData;
   newBooking: { startTime: string; roomId: string; [key: string]: any };
   handleConfirm: (booking: BookingData) => void;
+  handleCancel: () => void; // Add this prop to handle cancellation
 }
 
 const DragConfirmModal: React.FC<DragConfirmModalProps> = ({
@@ -31,7 +32,8 @@ const DragConfirmModal: React.FC<DragConfirmModalProps> = ({
   setShowModal,
   oldBooking,
   newBooking,
-  handleConfirm
+  handleConfirm,
+  handleCancel // Destructure this prop
 }) => {
   // Calculate the duration of the old booking
   const oldStartTime = DateTime.fromISO(oldBooking?.startTime);
@@ -89,7 +91,13 @@ const DragConfirmModal: React.FC<DragConfirmModalProps> = ({
           >
             Confirm
           </Button>
-          <Button onClick={() => setShowModal(false)} variant='secondary'>
+          <Button
+            onClick={() => {
+              handleCancel(); // Call handleCancel on click
+              setShowModal(false);
+            }}
+            variant='secondary'
+          >
             Cancel
           </Button>
         </DialogFooter>

@@ -26,6 +26,7 @@ import CurrentTimeLine from './CurrentTimeLine';
 import BookingGrid from './BookingGrid';
 import AddBooking from './AddBooking';
 import DragConfirmModal from './DragConfirmModal';
+import { toast } from 'sonner';
 
 interface BookingData {
   id: string;
@@ -80,11 +81,15 @@ const Page: React.FC = () => {
   const mutation = useMutation({
     onSuccess: res => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
-      // console.log('Booking updated successfully:', res.data);
     },
     onError: error => {
       if (axios.isAxiosError(error) && error.response) {
-        console.error('Error updating booking:', error.response.data);
+        toast.error(
+          `${(error?.response?.data as { message?: string })?.message}`,
+          {
+            position: 'top-center'
+          }
+        );
       } else {
         console.error('An error occurred:', error.message);
       }
@@ -99,7 +104,6 @@ const Page: React.FC = () => {
 
   const handleConfirmDrag = (newBooking: any) => {
     setShowDragConfirmModal(false);
-    // console.log('Confirmed new booking:', newBooking);
     setCancelDrag(false);
     setResetPosition(false);
 
@@ -148,6 +152,9 @@ const Page: React.FC = () => {
     // Trigger repositioning the booking to its initial position
     setCancelDrag(true);
     setResetPosition(true);
+    setTimeout(() => {
+      setResetPosition(false); // Reset the position state after the animation is complete
+    }, 300);
   };
 
   const fetchData = async (): Promise<any> => {
@@ -241,22 +248,20 @@ const Page: React.FC = () => {
     const initialLeft =
       (initialMinutesFromStart / timeIntervalInMinutes) * boxWidth;
 
-    // console.log('Initial Minutes from Start:', initialMinutesFromStart);
-    // console.log('Initial Left Position:', initialLeft);
+    console.log('Initial Minutes from Start:', initialMinutesFromStart);
+    console.log('Initial Left Position:', initialLeft);
 
     const relativePositionX = momentaryPosition.x;
-    // console.log('Relative Position X:', relativePositionX);
+    console.log('Relative Position X:', relativePositionX);
 
     const totalMinutesFromStart =
       initialMinutesFromStart +
       (relativePositionX / boxWidth) * timeIntervalInMinutes;
-    // console.log('Total Minutes from Start:', totalMinutesFromStart);
+    console.log('Total Minutes from Start:', totalMinutesFromStart);
 
     const momentaryTime = startDateTime.plus({
       minutes: totalMinutesFromStart
     });
-
-    // console.log('Momentary Time:', momentaryTime.toString());
 
     const endDateTime = DateTime.fromFormat(endHour, 'HH:mm', { zone: 'utc' });
 
@@ -275,8 +280,6 @@ const Page: React.FC = () => {
       startTime: momentaryTime.toFormat('HH:mm'),
       roomId: roomId
     };
-
-    // console.log('New Booking:', newBooking);
 
     setDraggedBooking({
       old: {
@@ -452,6 +455,7 @@ const Page: React.FC = () => {
             oldBooking={draggedBooking.old}
             newBooking={draggedBooking.new}
             handleConfirm={handleConfirmDrag}
+            handleCancel={handleCloseModal} // Pass handleCloseModal to handleCancel prop
           />
         )}
 

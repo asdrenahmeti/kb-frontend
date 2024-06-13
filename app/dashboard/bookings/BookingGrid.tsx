@@ -252,9 +252,11 @@ const BookingGrid: React.FC<BookingGridProps> = ({
                         booking.startTime
                       )
                     }
+                    resetPosition={resetPosition}
                     setDraggedBooking={setDraggedBooking}
                     setShowDragConfirmModal={setShowDragConfirmModal}
                     cancelDrag={cancelDrag}
+                    startHour={startHour} // Ensure startHour is passed here
                   >
                     <div
                       key={booking.id}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Draggable, { DraggableData, DraggableEvent } from 'react-draggable';
+import { DateTime } from 'luxon';
 
 interface BookingProps {
   booking: {
@@ -15,11 +16,14 @@ interface BookingProps {
   boxWidth: number;
   handleDrag: (
     momentaryPosition: { x: number; y: number },
-    roomId: string
+    roomId: string,
+    bookingStartTime: string
   ) => any;
   setDraggedBooking: (booking: { old: any; new: any }) => void;
   setShowDragConfirmModal: (show: boolean) => void;
   cancelDrag: boolean;
+  resetPosition: boolean; // Add this prop to reset the position
+  startHour: string;
 }
 
 const Booking: React.FC<BookingProps> = ({
@@ -31,7 +35,9 @@ const Booking: React.FC<BookingProps> = ({
   handleDrag,
   setDraggedBooking,
   setShowDragConfirmModal,
-  cancelDrag
+  cancelDrag,
+  resetPosition, // Destructure this prop
+  startHour
 }) => {
   const [position, setPosition] = useState<{ x: number; y: number }>({
     x: left,
@@ -44,10 +50,10 @@ const Booking: React.FC<BookingProps> = ({
   const [isDragging, setIsDragging] = useState<boolean>(false);
 
   useEffect(() => {
-    if (cancelDrag) {
+    if (cancelDrag || resetPosition) {
       setPosition(initialPosition);
     }
-  }, [cancelDrag, initialPosition]);
+  }, [cancelDrag, resetPosition, initialPosition]);
 
   const handleStart = () => {
     setInitialPosition(position);
@@ -60,18 +66,52 @@ const Booking: React.FC<BookingProps> = ({
   };
 
   const handleStop = (e: DraggableEvent, data: DraggableData) => {
-    const newPosition = {
-      x: Math.round(position.x / boxWidth) * boxWidth,
-      y: 0
-    };
+    // Snap to nearest 30-pixel grid
+    const snappedX = Math.round(position.x / boxWidth) * boxWidth;
+    const newPosition = { x: snappedX, y: 0 };
     setPosition(newPosition);
 
     if (isDragging) {
-      const momentaryPosition = { x: newPosition.x, y: 0 };
-      const newBooking = handleDrag(momentaryPosition, booking.roomId);
+      try {
+        if (!startHour || typeof startHour !== 'string') {
+          throw new Error(`Invalid startHour: ${startHour}`);
+        }
 
-      setDraggedBooking({ old: booking, new: newBooking });
-      setShowDragConfirmModal(true);
+        // Calculate the new start time relative to the booking's original start time
+        const originalStartTime = DateTime.fromISO(booking.startTime, {
+          zone: 'utc'
+        });
+        const initialGridUnits = Math.round(initialPosition.x / boxWidth);
+        const newGridUnits = Math.round(snappedX / boxWidth);
+        const gridUnitsMoved = newGridUnits - initialGridUnits;
+        const newMinutesFromOriginal = gridUnitsMoved * 5;
+        const newStartTime = originalStartTime
+          .plus({ minutes: newMinutesFromOriginal })
+          .toFormat('HH:mm');
+
+        console.log('initialGridUnits:', initialGridUnits);
+        console.log('newGridUnits:', newGridUnits);
+        console.log('gridUnitsMoved:', gridUnitsMoved);
+        console.log('newMinutesFromOriginal:', newMinutesFromOriginal);
+        console.log('newStartTime:', newStartTime);
+
+        const newBooking = handleDrag(
+          { x: newPosition.x, y: 0 },
+          booking.roomId,
+          newStartTime
+        );
+
+        setDraggedBooking({
+          old: booking,
+          new: { ...newBooking, startTime: newStartTime }
+        });
+        setShowDragConfirmModal(true);
+      } catch (error) {
+        console.error(
+          'Error calculating new start time:',
+          (error as Error).message
+        );
+      }
     }
   };
 
