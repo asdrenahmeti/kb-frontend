@@ -78,10 +78,7 @@ const Page = (props: Props) => {
       // You can handle errors here, such as displaying an error message to the user
     },
     mutationFn: formData => {
-      return axios.post(
-        `${process.env.NEXT_PUBLIC_NEXT_PUBLIC_BASE_URL}/rooms`,
-        formData
-      );
+      return axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/rooms`, formData);
     }
   });
 
