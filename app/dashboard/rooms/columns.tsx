@@ -1,5 +1,5 @@
 import ImageCell from './ImageCell';
-import EditRoomModal from './EditRoomModal';
+import { ColumnDef } from '@tanstack/react-table';
 
 export type Rooms = {
   id: string;
