@@ -381,11 +381,11 @@ const Page: React.FC = () => {
         </div>
 
         <div
-          className={`p-4 w-full shadow-xl border-[1px] border-black/10 absolute bottom-0 overflow-hidden rounded-tl-xl rounded-tr-xl transition-height duration-300 ${
-            isCollapsed ? 'h-[50px]' : 'h-[180px]'
+          className={`w-full shadow-xl border-[1px] bg-kb-primary/20 border-black/10 absolute bottom-0 overflow-hidden rounded-tl-xl rounded-tr-xl transition-height duration-300 ${
+            isCollapsed ? 'h-[38px]' : 'h-[180px]'
           }`}
         >
-          <div className='flex justify-between items-center mb-2'>
+          <div className='flex justify-between items-center bg-kb-primary px-4 py-2 text-white'>
             <p className='font-medium'>
               {activeBooking
                 ? 'Active Selected Booking' + ` - ${activeBooking?.booking?.id}`
@@ -396,19 +396,15 @@ const Page: React.FC = () => {
               className='text-blue-500'
             >
               {isCollapsed ? (
-                <PanelBottomOpen color='black' />
+                <PanelBottomOpen color='white' />
               ) : (
-                <PanelTopOpen color='black' />
+                <PanelTopOpen color='white' />
               )}
             </button>
           </div>
           {!isCollapsed && activeBooking && (
-            <div className='grid grid-cols-2'>
+            <div className='grid grid-cols-2 p-4'>
               <div className='col-span-1'>
-                <div className='flex gap-4'>
-                  <p className='font-medium min-w-[100px]'>Booking ID:</p>
-                  <p className='font-light'>{activeBooking?.booking?.id}</p>
-                </div>
                 <div className='flex gap-4'>
                   <p className='font-medium min-w-[100px]'>User:</p>
                   <p className='font-light'>User 1</p>

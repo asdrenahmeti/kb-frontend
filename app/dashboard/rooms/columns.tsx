@@ -1,6 +1,5 @@
-'use client';
-
-import { ColumnDef } from '@tanstack/react-table';
+import ImageCell from './ImageCell';
+import EditRoomModal from './EditRoomModal';
 
 export type Rooms = {
   id: string;
@@ -18,6 +17,7 @@ export type Rooms = {
     startTime: string;
     endTime: string;
   };
+  image: string;
 };
 
 export const columns: ColumnDef<Rooms>[] = [
@@ -30,19 +30,19 @@ export const columns: ColumnDef<Rooms>[] = [
     header: 'Capacity'
   },
   {
-    accessorKey: `slot_1`,
+    accessorKey: 'slot_1',
     header: 'Slot 1'
   },
   {
     accessorKey: 'slot_2',
     header: 'Slot 2'
+  },
+  {
+    accessorKey: 'image',
+    header: 'Image',
+    cell: ({ row }) => {
+      const imageUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/public/room-images/${row.original.image}`;
+      return <ImageCell imageUrl={imageUrl} />;
+    }
   }
-  // {
-  //   accessorKey: 'closing_hour',
-  //   header: 'Closing Hour'
-  // },
-  // {
-  //   accessorKey: 'opening_hour',
-  //   header: 'Opening Hour'
-  // },
 ];

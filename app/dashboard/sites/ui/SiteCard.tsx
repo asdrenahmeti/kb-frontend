@@ -1,10 +1,8 @@
 import clsx from 'clsx';
-import React, { use, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   QueryClient,
-  QueryClientProvider,
   useQueryClient,
-  useQuery,
   useMutation
 } from '@tanstack/react-query';
 import {
@@ -20,6 +18,7 @@ import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 
 type Props = {
   site_name: string;
@@ -30,6 +29,7 @@ type Props = {
   simple: boolean;
   openingHours: any;
   closingHours: any;
+  image?: string;
 };
 
 const SiteCard = ({
@@ -39,12 +39,16 @@ const SiteCard = ({
   onClick,
   className,
   simple,
+  image,
   openingHours,
   closingHours
 }: Props) => {
   const [open, setOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [siteName, setSiteName] = useState(site_name);
+  const [editOpeningHour, setEditOpeningHour] = useState(openingHours);
+  const [editClosingHour, setEditClosingHour] = useState(closingHours);
+  const [editImage, setEditImage] = useState<File | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -52,16 +56,21 @@ const SiteCard = ({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sites'] });
       setSiteName(site_name);
+      toast.success(`Site deleted successfully`, {
+        position: 'top-center'
+      });
       setOpen(false);
     },
     mutationFn: item => {
-      return axios.delete(`${process.env.NEXT_PUBLIC_BASE_URL}/sites/${item}`);
+      return axios.delete(`${process.env.NEXT_PUBLIC_BASE_URL}/sites/${id}`);
     }
   });
 
   useEffect(() => {
     setSiteName(site_name);
-  }, [site_name]);
+    setEditOpeningHour(openingHours);
+    setEditClosingHour(closingHours);
+  }, [site_name, openingHours, closingHours]);
 
   const mutation = useMutation({
     onSuccess: () => {
@@ -69,25 +78,44 @@ const SiteCard = ({
       setSiteName('');
       setEditMode(false);
     },
-    mutationFn: editedSite => {
-      return axios.patch(`${process.env.NEXT_PUBLIC_BASE_URL}/sites/${id}`, {
-        editedSite,
-        id: id,
-        site_name: siteName
-      });
+    mutationFn: async () => {
+      const formData = new FormData();
+      formData.append('name', siteName);
+      formData.append('openingHours', editOpeningHour);
+      formData.append('closingHours', editClosingHour);
+      if (editImage) {
+        formData.append('file', editImage);
+      }
+
+      return axios.patch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/sites/${id}`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
     }
   });
 
   return (
     <div
       className={clsx(
-        'p-8 h-32 lg:h-56 shadow-lg relative w-full border  flex justify-center items-center rounded-2xl overflow-hidden',
-        className
+        'relative p-8 h-32 lg:h-56 shadow-lg w-full border flex justify-center items-center rounded-2xl overflow-hidden',
+        className,
+        image ? 'bg-cover bg-center' : ''
       )}
+      style={{
+        backgroundImage: image
+          ? `url(${process.env.NEXT_PUBLIC_BASE_URL}/public/site-images/${image})`
+          : 'none'
+      }}
       onClick={onClick}
     >
+      {image && <div className='absolute inset-0 bg-black opacity-50'></div>}
       {!simple && (
-        <div className=' h-8 flex justify-center items-center top-0 gap-1 pr-2 right-0 rounded-tr-2xl absolute '>
+        <div className='absolute h-8 flex justify-center items-center top-0 gap-1 px-2 right-0 rounded-bl-2xl py-2 bg-white'>
           <Dialog open={editMode} onOpenChange={() => setEditMode(!editMode)}>
             <DialogTrigger asChild>
               <div className='cursor-pointer'>
@@ -97,7 +125,7 @@ const SiteCard = ({
                   viewBox='0 0 24 24'
                   strokeWidth={1.5}
                   stroke='currentColor'
-                  className='w-6 h-6 '
+                  className='w-6 h-6'
                 >
                   <path
                     strokeLinecap='round'
@@ -111,7 +139,7 @@ const SiteCard = ({
               <DialogHeader>
                 <DialogTitle>Edit site</DialogTitle>
                 <DialogDescription>
-                  Edit name and change the image
+                  Edit name, opening hour, closing hour, and change the image
                 </DialogDescription>
               </DialogHeader>
               <div className='grid gap-4 py-4'>
@@ -124,6 +152,37 @@ const SiteCard = ({
                     className='col-span-3'
                     value={siteName}
                     onChange={e => setSiteName(e.target.value)}
+                  />
+                  <Label htmlFor='openingHour' className='text-right'>
+                    Opening Hour
+                  </Label>
+                  <Input
+                    id='openingHour'
+                    className='col-span-3'
+                    value={editOpeningHour}
+                    onChange={e => setEditOpeningHour(e.target.value)}
+                  />
+                  <Label htmlFor='closingHour' className='text-right'>
+                    Closing Hour
+                  </Label>
+                  <Input
+                    id='closingHour'
+                    className='col-span-3'
+                    value={editClosingHour}
+                    onChange={e => setEditClosingHour(e.target.value)}
+                  />
+                  <Label htmlFor='image' className='text-right'>
+                    Image
+                  </Label>
+                  <Input
+                    id='image'
+                    type='file'
+                    className='col-span-3'
+                    onChange={e => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        setEditImage(e.target.files[0]);
+                      }
+                    }}
                   />
                 </div>
               </div>
@@ -163,10 +222,9 @@ const SiteCard = ({
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Delete Account</DialogTitle>
+                <DialogTitle>Delete site</DialogTitle>
                 <DialogDescription>
-                  Are you sure you want to delete your account? This action
-                  cannot be undone.
+                  Are you sure you want to delete the selected site?
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
@@ -186,10 +244,10 @@ const SiteCard = ({
         </div>
       )}
 
-      <div className='flex flex-col justify-center items-center'>
+      <div className='flex flex-col justify-center items-center relative z-10 bg-white rounded-md'>
         <p className='text-xl'>{site_name}</p>
         {openingHours && closingHours && (
-          <p>
+          <p className='px-4'>
             {openingHours} - {closingHours}
           </p>
         )}

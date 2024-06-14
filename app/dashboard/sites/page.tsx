@@ -22,6 +22,7 @@ import {
 } from '@tanstack/react-query';
 import axios from 'axios';
 import SiteCard from './ui/SiteCard';
+import { toast } from 'sonner';
 
 type Props = {};
 
@@ -29,6 +30,7 @@ const Page = (props: Props) => {
   const [siteName, setSiteName] = useState('');
   const [selectedOpening, setSelectedOpening] = useState('');
   const [selectedClosing, setSelectedClosing] = useState('');
+  const [siteImage, setSiteImage] = useState<File | null>(null);
 
   const [siteModal, setSiteModal] = useState(false);
   const { isPending, error, data, isFetching } = useQuery({
@@ -41,17 +43,11 @@ const Page = (props: Props) => {
   const queryClient = useQueryClient();
 
   const formatOpeningHour = (inputHour: string) => {
-    // Parse the input hour as integer
     const hour = parseInt(inputHour, 10);
-
-    // Check if hour is a valid number
     if (!isNaN(hour) && hour >= 0 && hour <= 23) {
-      // Convert hour to string with leading zero if needed
       const formattedHour = hour < 10 ? `0${hour}` : `${hour}`;
-      // Return the formatted opening hour string
       return `${formattedHour}:00`;
     } else {
-      // Return empty string if input is invalid
       return '';
     }
   };
@@ -60,26 +56,38 @@ const Page = (props: Props) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sites'] });
       setSiteName('');
+      setSelectedOpening('');
+      setSelectedClosing('');
+      setSiteImage(null);
+      toast.success(`Site added successfully`, {
+        position: 'top-center'
+      });
       setSiteModal(false);
     },
-    mutationFn: newSite => {
-      return axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/sites`, {
-        newSite,
-        name: siteName,
-        openingHours: selectedOpening,
-        closingHours: selectedClosing
+    mutationFn: async newSite => {
+      const formData = new FormData();
+      formData.append('name', siteName);
+      formData.append('openingHours', selectedOpening);
+      formData.append('closingHours', selectedClosing);
+      if (siteImage) {
+        formData.append('file', siteImage);
+      }
+
+      return axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/sites`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
       });
     }
   });
 
   if (isPending) return 'Loading...';
-
   if (error) return 'An error has occurred: ' + error.message;
 
   return (
     <div>
       <h1 className='text-2xl font-medium'>Manage Sites</h1>
-      <div className='grid  gap-8 w-full grid-cols-1 sm:grid-cols-2 md:w-2/3 lg:w-3/4 mt-4'>
+      <div className='grid gap-8 w-full grid-cols-1 sm:grid-cols-2 md:w-2/3 lg:w-3/4 mt-4'>
         <Dialog open={siteModal} onOpenChange={() => setSiteModal(!siteModal)}>
           <DialogTrigger asChild>
             <SiteCard
@@ -122,9 +130,10 @@ const Page = (props: Props) => {
                   id='name'
                   placeholder='Write a site name'
                   className='col-span-3'
+                  value={siteName}
                   onChange={e => setSiteName(e.target.value)}
                 />
-                <Label htmlFor='name' className='text-right'>
+                <Label htmlFor='openingHour' className='text-right'>
                   Opening hour
                 </Label>
                 <Input
@@ -136,7 +145,7 @@ const Page = (props: Props) => {
                     setSelectedOpening(formattedHour);
                   }}
                 />
-                <Label htmlFor='name' className='text-right'>
+                <Label htmlFor='closingHour' className='text-right'>
                   Closing hour
                 </Label>
                 <Input
@@ -146,6 +155,19 @@ const Page = (props: Props) => {
                   onChange={e => {
                     const formattedHour = formatOpeningHour(e.target.value);
                     setSelectedClosing(formattedHour);
+                  }}
+                />
+                <Label htmlFor='image' className='text-right'>
+                  Image
+                </Label>
+                <Input
+                  id='image'
+                  type='file'
+                  className='col-span-3'
+                  onChange={e => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      setSiteImage(e.target.files[0]);
+                    }
                   }}
                 />
               </div>
@@ -169,6 +191,7 @@ const Page = (props: Props) => {
         {data.map(
           (
             item: {
+              image: string;
               id: string;
               name: string;
               openingHours: string;
@@ -184,6 +207,7 @@ const Page = (props: Props) => {
                 openingHours={item.openingHours}
                 closingHours={item.closingHours}
                 simple={false}
+                image={item.image}
               ></SiteCard>
             );
           }
