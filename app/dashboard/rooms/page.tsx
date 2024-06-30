@@ -62,9 +62,21 @@ const Page = (props: Props) => {
   const generateHourOptions = (opening: string, closing: string) => {
     const openingHour = DateTime.fromFormat(opening, 'HH:mm').hour;
     const closingHour = DateTime.fromFormat(closing, 'HH:mm').hour;
-    return Array.from({ length: closingHour - openingHour + 1 }, (_, i) =>
-      DateTime.fromObject({ hour: openingHour + i }).toFormat('HH:mm')
-    );
+    let hours = [];
+
+    if (closingHour < openingHour) {
+      for (let i = openingHour; i < 24; i++) {
+        hours.push(DateTime.fromObject({ hour: i }).toFormat('HH:mm'));
+      }
+      for (let i = 0; i <= closingHour; i++) {
+        hours.push(DateTime.fromObject({ hour: i }).toFormat('HH:mm'));
+      }
+    } else {
+      for (let i = openingHour; i <= closingHour; i++) {
+        hours.push(DateTime.fromObject({ hour: i }).toFormat('HH:mm'));
+      }
+    }
+    return hours;
   };
 
   const mutation = useMutation({
@@ -166,9 +178,12 @@ const Page = (props: Props) => {
           'HH:mm'
         ).hour;
         const hours = Array.from(
-          { length: closingHour - selectedHour },
+          {
+            length:
+              closingHour - selectedHour + (closingHour < selectedHour ? 24 : 0)
+          },
           (_, i) =>
-            DateTime.fromObject({ hour: selectedHour + i + 1 }).toFormat(
+            DateTime.fromObject({ hour: (selectedHour + i + 1) % 24 }).toFormat(
               'HH:mm'
             )
         );
@@ -187,9 +202,12 @@ const Page = (props: Props) => {
           'HH:mm'
         ).hour;
         const hours = Array.from(
-          { length: closingHour - selectedHour },
+          {
+            length:
+              closingHour - selectedHour + (closingHour < selectedHour ? 24 : 0)
+          },
           (_, i) =>
-            DateTime.fromObject({ hour: selectedHour + i + 1 }).toFormat(
+            DateTime.fromObject({ hour: (selectedHour + i + 1) % 24 }).toFormat(
               'HH:mm'
             )
         );
@@ -208,9 +226,12 @@ const Page = (props: Props) => {
           'HH:mm'
         ).hour;
         const hours = Array.from(
-          { length: closingHour - selectedHour },
+          {
+            length:
+              closingHour - selectedHour + (closingHour < selectedHour ? 24 : 0)
+          },
           (_, i) =>
-            DateTime.fromObject({ hour: selectedHour + i + 1 }).toFormat(
+            DateTime.fromObject({ hour: (selectedHour + i + 1) % 24 }).toFormat(
               'HH:mm'
             )
         );

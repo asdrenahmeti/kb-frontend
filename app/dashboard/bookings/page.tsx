@@ -33,6 +33,7 @@ interface BookingData {
   startTime: string;
   endTime: string;
   date: string;
+  roomId: string;
   [key: string]: any;
 }
 
@@ -54,9 +55,8 @@ const calculateScrollPosition = (
   const startTime = DateTime.fromFormat(startHour, 'HH:mm');
   const targetTime = currentTime.minus({ hours: 1 });
 
-  // Calculate difference in minutes from start time to target time
   const diffInMinutes = targetTime.diff(startTime, 'minutes').minutes;
-  const scrollPosition = (diffInMinutes / 5) * 30; // 30px per 5-minute interval
+  const scrollPosition = (diffInMinutes / 5) * 30;
 
   return scrollPosition;
 };
@@ -102,18 +102,16 @@ const Page: React.FC = () => {
     }
   });
 
-  const handleConfirmDrag = (newBooking: any) => {
+  const handleConfirmDrag = (newBooking: BookingData) => {
     setShowDragConfirmModal(false);
     setCancelDrag(false);
     setResetPosition(false);
 
-    const { id, date, startTime, endTime, ...rest } = newBooking;
+    const { id, date, startTime, endTime, roomId, ...rest } = newBooking;
 
-    // Parse startTime and endTime
     const [startHour, startMinute] = startTime.split(':');
     const [endHour, endMinute] = endTime.split(':');
 
-    // Format startTime and endTime to the required format
     const formattedStartTime = DateTime.fromObject(
       {
         year: new Date(date).getFullYear(),
@@ -141,6 +139,7 @@ const Page: React.FC = () => {
       startTime: formattedStartTime,
       endTime: formattedEndTime,
       date,
+      roomId, // Ensure the new roomId is included
       ...rest
     };
 
@@ -149,11 +148,10 @@ const Page: React.FC = () => {
 
   const handleCloseModal = () => {
     setShowDragConfirmModal(false);
-    // Trigger repositioning the booking to its initial position
     setCancelDrag(true);
     setResetPosition(true);
     setTimeout(() => {
-      setResetPosition(false); // Reset the position state after the animation is complete
+      setResetPosition(false);
     }, 300);
   };
 
@@ -230,10 +228,9 @@ const Page: React.FC = () => {
     roomId: string,
     bookingStartTime: string
   ) => {
-    const timeIntervalInMinutes = 5; // Each box represents a 5-minute interval
-    const boxWidth = 30; // Each box is 30px wide
+    const timeIntervalInMinutes = 5;
+    const boxWidth = 30;
 
-    // Calculate the initial left position based on the booking start time
     const startDateTime = DateTime.fromFormat(startHour, 'HH:mm', {
       zone: 'utc'
     });
@@ -248,16 +245,11 @@ const Page: React.FC = () => {
     const initialLeft =
       (initialMinutesFromStart / timeIntervalInMinutes) * boxWidth;
 
-    console.log('Initial Minutes from Start:', initialMinutesFromStart);
-    console.log('Initial Left Position:', initialLeft);
-
     const relativePositionX = momentaryPosition.x;
-    console.log('Relative Position X:', relativePositionX);
 
     const totalMinutesFromStart =
       initialMinutesFromStart +
       (relativePositionX / boxWidth) * timeIntervalInMinutes;
-    console.log('Total Minutes from Start:', totalMinutesFromStart);
 
     const momentaryTime = startDateTime.plus({
       minutes: totalMinutesFromStart
@@ -303,7 +295,7 @@ const Page: React.FC = () => {
     if (startHour && endHour) {
       const currentTime = DateTime.local();
       const scrollPosition = calculateScrollPosition(startHour, currentTime);
-      const container = document.querySelector('.w-full.overflow-auto'); // Adjust selector as needed
+      const container = document.querySelector('.w-full.overflow-auto');
       if (container) {
         container.scrollLeft = scrollPosition;
       }
@@ -374,7 +366,7 @@ const Page: React.FC = () => {
                 setDraggedBooking={setDraggedBooking}
                 setShowDragConfirmModal={setShowDragConfirmModal}
                 cancelDrag={cancelDrag}
-                resetPosition={resetPosition} // Pass resetPosition prop
+                resetPosition={resetPosition}
               />
             </>
           )}
@@ -382,13 +374,13 @@ const Page: React.FC = () => {
 
         <div
           className={`w-full shadow-xl border-[1px] bg-kb-primary/20 border-black/10 absolute bottom-0 overflow-hidden rounded-tl-xl rounded-tr-xl transition-height duration-300 ${
-            isCollapsed ? 'h-[38px]' : 'h-[180px]'
+            isCollapsed ? 'h-[38px]' : 'h-[240px]'
           }`}
         >
           <div className='flex justify-between items-center bg-kb-primary px-4 py-2 text-white'>
             <p className='font-medium'>
               {activeBooking
-                ? 'Active Selected Booking' + ` - ${activeBooking?.booking?.id}`
+                ? `Active Selected Booking - ${activeBooking?.booking?.id}`
                 : 'No Active Booking'}
             </p>
             <button
@@ -403,26 +395,44 @@ const Page: React.FC = () => {
             </button>
           </div>
           {!isCollapsed && activeBooking && (
-            <div className='grid grid-cols-2 p-4'>
+            <div className='grid grid-cols-3 gap-4 p-4'>
               <div className='col-span-1'>
-                <div className='flex gap-4'>
-                  <p className='font-medium min-w-[100px]'>User:</p>
-                  <p className='font-light'>User 1</p>
+                <div className='flex flex-col '>
+                  <div className='flex'>
+                    <p className='font-medium min-w-[100px]'>User:</p>
+                    <p className='font-light'>
+                      {activeBooking?.booking?.user?.firstName || 'not defined'}{' '}
+                      {activeBooking?.booking?.user?.lastName || 'not defined'}
+                    </p>
+                  </div>
+                  <div className='flex'>
+                    <p className='font-medium min-w-[100px]'>Email:</p>
+                    <p className='font-light'>
+                      {activeBooking?.booking?.user?.email || 'not defined'}
+                    </p>
+                  </div>
+                  <div className='flex'>
+                    <p className='font-medium min-w-[100px]'>Phone:</p>
+                    <p className='font-light'>
+                      {activeBooking?.booking?.user?.phone_number ||
+                        'not defined'}
+                    </p>
+                  </div>
                 </div>
-                <div className='flex gap-4'>
-                  <p className='font-medium min-w-[100px]'>Status</p>
+                <div className='flex gap-2 mt-2'>
+                  <p className='font-medium min-w-[100px]'>Status:</p>
                   <p className='font-light'>{activeBooking?.booking?.status}</p>
                 </div>
-                <div className='flex gap-4'>
-                  <p className='font-medium min-w-[100px]'>Start time</p>
+                <div className='flex gap-2'>
+                  <p className='font-medium min-w-[100px]'>Start time:</p>
                   <p className='font-light'>
                     {DateTime.fromISO(activeBooking?.booking?.startTime)
                       .toUTC()
                       .toFormat('HH:mm')}
                   </p>
                 </div>
-                <div className='flex gap-4'>
-                  <p className='font-medium min-w-[100px]'>End time</p>
+                <div className='flex gap-2'>
+                  <p className='font-medium min-w-[100px]'>End time:</p>
                   <p className='font-light'>
                     {DateTime.fromISO(activeBooking?.booking?.endTime)
                       .toUTC()
@@ -431,11 +441,11 @@ const Page: React.FC = () => {
                 </div>
               </div>
               <div className='col-span-1'>
-                <div className='flex gap-4'>
+                <div className='flex gap-2'>
                   <p className='font-medium min-w-[100px]'>Room:</p>
                   <p className='font-light'>{activeBooking?.room?.name}</p>
                 </div>
-                <div className='flex gap-4'>
+                <div className='flex gap-2'>
                   <p className='font-medium min-w-[100px]'>Capacity:</p>
                   <p className='font-light'>{activeBooking?.room?.capacity}</p>
                 </div>
@@ -451,7 +461,7 @@ const Page: React.FC = () => {
             oldBooking={draggedBooking.old}
             newBooking={draggedBooking.new}
             handleConfirm={handleConfirmDrag}
-            handleCancel={handleCloseModal} // Pass handleCloseModal to handleCancel prop
+            handleCancel={handleCloseModal}
           />
         )}
 
@@ -460,6 +470,7 @@ const Page: React.FC = () => {
             bookingModal={bookingModal}
             setBookingModal={setBookingModal}
             booking={newBooking}
+            site={selectedSite}
           />
         )}
       </div>

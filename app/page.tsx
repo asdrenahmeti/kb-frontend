@@ -1,26 +1,19 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import AnimatedSlider from '@/components/ui/animated-slider';
+import BookingForm from '@/components/ui/booking-form';
+import { Button } from '@/components/ui/button';
+import Footer from '@/components/ui/footer';
+import NavBar from '@/components/ui/navigation';
+import { toast } from 'sonner';
 
 export default function Home() {
   return (
-    <div className="flex flex-col gap-4 h-screen justify-center items-center">
-      <h1 className="text-5xl font-bold">Karaokebox UK</h1>
-      <Button
-        variant="default"
-        onClick={() =>
-          toast("shadcn is working", {
-            description: "A perfect start",
-            action: {
-              label: "Undo",
-              onClick: () => console.log("Undo"),
-            },
-          })
-        }
-      >
-        Test shadcn
-      </Button>
+    <div className='bg-black'>
+      {/* <NavBar /> */}
+      <AnimatedSlider />
+      <BookingForm />
+      <Footer />
     </div>
   );
 }

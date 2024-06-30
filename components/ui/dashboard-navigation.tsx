@@ -12,6 +12,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import Logo from './../../public/logo.png';
+import { useSession } from 'next-auth/react';
 
 const navigation = [
   { name: 'Home', href: '/dashboard', icon: HomeIcon },
@@ -38,6 +39,8 @@ function classNames(...classes: any) {
 }
 
 export default function DashboardNavigation() {
+  const { data: session, status } = useSession();
+
   const pathname = usePathname();
 
   return (

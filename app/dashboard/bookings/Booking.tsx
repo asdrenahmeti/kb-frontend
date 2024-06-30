@@ -22,8 +22,10 @@ interface BookingProps {
   setDraggedBooking: (booking: { old: any; new: any }) => void;
   setShowDragConfirmModal: (show: boolean) => void;
   cancelDrag: boolean;
-  resetPosition: boolean; // Add this prop to reset the position
+  resetPosition: boolean;
   startHour: string;
+  roomIds: string[]; // Add a new prop for roomIds
+  roomHeight: number; // Add a new prop for roomHeight
 }
 
 const Booking: React.FC<BookingProps> = ({
@@ -36,8 +38,10 @@ const Booking: React.FC<BookingProps> = ({
   setDraggedBooking,
   setShowDragConfirmModal,
   cancelDrag,
-  resetPosition, // Destructure this prop
-  startHour
+  resetPosition,
+  startHour,
+  roomIds, // Destructure the new prop
+  roomHeight // Destructure the new prop
 }) => {
   const [position, setPosition] = useState<{ x: number; y: number }>({
     x: left,
@@ -48,27 +52,38 @@ const Booking: React.FC<BookingProps> = ({
     y: number;
   }>({ x: left, y: 0 });
   const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [yAdjusted, setYAdjusted] = useState<boolean>(false);
 
   useEffect(() => {
     if (cancelDrag || resetPosition) {
       setPosition(initialPosition);
+      setYAdjusted(false);
     }
   }, [cancelDrag, resetPosition, initialPosition]);
 
   const handleStart = () => {
     setInitialPosition(position);
-    setIsDragging(false); // Reset dragging flag
+    setIsDragging(false);
+    setYAdjusted(false);
   };
 
   const handleDragEvent = (e: DraggableEvent, data: DraggableData) => {
-    setIsDragging(true); // Set dragging flag to true on drag
-    setPosition({ x: position.x + data.deltaX, y: 0 });
+    setIsDragging(true);
+    let newY = position.y + data.deltaY;
+    if (!yAdjusted) {
+      newY += 8;
+      setYAdjusted(true);
+    }
+    setPosition({
+      x: position.x + data.deltaX,
+      y: newY
+    });
   };
 
   const handleStop = (e: DraggableEvent, data: DraggableData) => {
-    // Snap to nearest 30-pixel grid
     const snappedX = Math.round(position.x / boxWidth) * boxWidth;
-    const newPosition = { x: snappedX, y: 0 };
+    const snappedY = Math.round(position.y / roomHeight) * roomHeight;
+    const newPosition = { x: snappedX, y: snappedY };
     setPosition(newPosition);
 
     if (isDragging) {
@@ -77,7 +92,6 @@ const Booking: React.FC<BookingProps> = ({
           throw new Error(`Invalid startHour: ${startHour}`);
         }
 
-        // Calculate the new start time relative to the booking's original start time
         const originalStartTime = DateTime.fromISO(booking.startTime, {
           zone: 'utc'
         });
@@ -89,21 +103,22 @@ const Booking: React.FC<BookingProps> = ({
           .plus({ minutes: newMinutesFromOriginal })
           .toFormat('HH:mm');
 
-        console.log('initialGridUnits:', initialGridUnits);
-        console.log('newGridUnits:', newGridUnits);
-        console.log('gridUnitsMoved:', gridUnitsMoved);
-        console.log('newMinutesFromOriginal:', newMinutesFromOriginal);
-        console.log('newStartTime:', newStartTime);
+        let newRoomIndex = Math.round(snappedY / roomHeight);
+
+        if (newRoomIndex < 0) newRoomIndex = 0;
+        if (newRoomIndex >= roomIds.length) newRoomIndex = roomIds.length - 1;
+
+        const newRoomId = roomIds[newRoomIndex];
 
         const newBooking = handleDrag(
-          { x: newPosition.x, y: 0 },
-          booking.roomId,
+          { x: newPosition.x, y: newPosition.y },
+          newRoomId,
           newStartTime
         );
 
         setDraggedBooking({
           old: booking,
-          new: { ...newBooking, startTime: newStartTime }
+          new: { ...newBooking, startTime: newStartTime, roomId: newRoomId }
         });
         setShowDragConfirmModal(true);
       } catch (error) {
@@ -119,8 +134,7 @@ const Booking: React.FC<BookingProps> = ({
     <Draggable
       key={booking.id + '-' + index}
       position={position}
-      axis='x'
-      grid={[boxWidth, 30]}
+      grid={[boxWidth, roomHeight]}
       onStart={handleStart}
       onDrag={handleDragEvent}
       onStop={handleStop}

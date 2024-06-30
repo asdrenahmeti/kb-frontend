@@ -1,16 +1,15 @@
-'use client';
-
 import { ColumnDef } from '@tanstack/react-table';
 
-export type Menu = {
-  id: string;
-  item_type: 'DRINK' | 'FOOD';
+interface Menu {
+  id: number;
   name: string;
+  item_type: string;
   price: number;
-  site?: any;
-};
+}
 
-export const columns: ColumnDef<Menu>[] = [
+export const getColumns = (
+  handleEdit: (item: Menu) => void
+): ColumnDef<Menu>[] => [
   {
     accessorKey: 'name',
     header: 'Name'
@@ -22,5 +21,17 @@ export const columns: ColumnDef<Menu>[] = [
   {
     accessorKey: 'price',
     header: 'Price'
+  },
+  {
+    id: 'actions',
+    header: 'Actions',
+    cell: ({ row }) => (
+      <button
+        className='text-blue-500 hover:underline'
+        onClick={() => handleEdit(row.original)}
+      >
+        Edit
+      </button>
+    )
   }
 ];

@@ -7,7 +7,7 @@ interface BookingData {
   startTime: string;
   endTime: string;
   roomId: string;
-  [key: string]: any; // Additional properties
+  [key: string]: any;
 }
 
 interface Room {
@@ -118,7 +118,6 @@ const BookingGrid: React.FC<BookingGridProps> = ({
     const diffInMinutes = startTimeObj.diff(startHourObj, 'minutes').minutes;
     const leftPosition = (diffInMinutes / 5) * 30;
 
-    // Verify if we should divide by 2 as a temporary measure to check the logic
     const adjustedLeftPosition = leftPosition / 2;
     return adjustedLeftPosition;
   };
@@ -132,6 +131,9 @@ const BookingGrid: React.FC<BookingGridProps> = ({
       });
     }
   }, [data, startHour]);
+
+  const roomIds = data?.rooms.map(room => room.id) || [];
+  const roomHeight = 35; // Define the room height
 
   return (
     <div className='relative mt-8 w-full'>
@@ -155,7 +157,7 @@ const BookingGrid: React.FC<BookingGridProps> = ({
             className='relative w-full grid grid-cols-[120px_auto] mb-2'
           >
             <div
-              className={`h-[35px] w-[120px] rounded-tl-md rounded-bl-md text-sm bg-kb-primary text-white pl-2 flex items-center font-semibold sticky`}
+              className={`h-[${roomHeight}px] w-[120px] rounded-tl-md rounded-bl-md text-sm bg-kb-primary text-white pl-2 flex items-center font-semibold sticky`}
               style={{ left: '0', zIndex: 10 }}
             >
               {room.name}
@@ -248,7 +250,7 @@ const BookingGrid: React.FC<BookingGridProps> = ({
                     handleDrag={momentaryPosition =>
                       handleBoxDrag(
                         momentaryPosition,
-                        booking.roomId,
+                        room.id,
                         booking.startTime
                       )
                     }
@@ -256,7 +258,9 @@ const BookingGrid: React.FC<BookingGridProps> = ({
                     setDraggedBooking={setDraggedBooking}
                     setShowDragConfirmModal={setShowDragConfirmModal}
                     cancelDrag={cancelDrag}
-                    startHour={startHour} // Ensure startHour is passed here
+                    startHour={startHour}
+                    roomIds={roomIds} // Pass roomIds to the Booking component
+                    roomHeight={roomHeight} // Pass roomHeight to the Booking component
                   >
                     <div
                       key={booking.id}

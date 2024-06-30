@@ -6,7 +6,6 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
@@ -29,15 +28,17 @@ import {
   useMutation
 } from '@tanstack/react-query';
 import axios from 'axios';
-import { Menu, columns } from './columns';
+import { getColumns } from './columns';
 import { DataTable } from './data-table';
 import { Button } from '@/components/ui/button';
 import { useForm } from 'react-hook-form';
+import { EditDialog } from './EditDialog';
 
-type Props = {};
-
-const Page = (props: Props) => {
+const Page = () => {
+  const [selectedSite, setSelectedSite] = useState('');
   const [menuModal, setMenuModal] = useState(false);
+  const [editItem, setEditItem] = useState(null);
+
   const {
     register,
     handleSubmit,
@@ -51,8 +52,9 @@ const Page = (props: Props) => {
 
   const mutation = useMutation({
     onSuccess: data => {
-      queryClient.invalidateQueries({ queryKey: ['menus'] });
+      queryClient.invalidateQueries({ queryKey: ['menus', selectedSite] });
       setMenuModal(false);
+      reset();
     },
     onError: error => {
       console.error('Error creating menu:', error);
@@ -67,9 +69,17 @@ const Page = (props: Props) => {
       ...formData,
       price: Number(formData.price),
       item_type: formData.item_type,
-      site_id: '53bdecea-8699-4bd1-b475-ab48c3cecad9'
+      site_id: selectedSite
     });
   };
+
+  const { data: sites = [] } = useQuery({
+    queryKey: ['sites'],
+    queryFn: () =>
+      axios
+        .get(`${process.env.NEXT_PUBLIC_BASE_URL}/sites`)
+        .then(res => res.data)
+  });
 
   const {
     isPending,
@@ -77,23 +87,49 @@ const Page = (props: Props) => {
     data = [],
     isFetching
   } = useQuery({
-    queryKey: ['menus'],
+    queryKey: ['menus', selectedSite],
     queryFn: () =>
       axios
-        .get(`${process.env.NEXT_PUBLIC_BASE_URL}/menus`)
-        .then(res => res.data)
+        .get(`${process.env.NEXT_PUBLIC_BASE_URL}/menus/site/${selectedSite}`)
+        .then(res => res.data),
+    enabled: !!selectedSite // Only run the query if selectedSite is not empty
   });
 
-  const itemType = watch('item_type'); // Watch the item_type value
+  const itemType = watch('item_type');
+
+  const handleEdit = (item: any) => {
+    setEditItem(item);
+  };
+
+  const handleCloseEditDialog = () => {
+    setEditItem(null);
+  };
 
   return (
     <div>
       <h1 className='text-2xl font-medium mb-4'>Manage Menus</h1>
 
       <div className='flex justify-between items-center'>
+        <Select onValueChange={item => setSelectedSite(item)}>
+          <SelectTrigger className='w-[180px]'>
+            <SelectValue placeholder='Select a site' />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {sites.map((item: any, index: number) => (
+                <SelectItem value={item.id} key={index}>
+                  {item.name}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
         <Dialog open={menuModal} onOpenChange={() => setMenuModal(!menuModal)}>
           <DialogTrigger asChild>
-            <Button className='bg-kb-primary hover:bg-kb-secondary'>
+            <Button
+              className='bg-kb-primary hover:bg-kb-secondary'
+              disabled={selectedSite == ''}
+            >
               Add item menus{' '}
               <svg
                 xmlns='http://www.w3.org/2000/svg'
@@ -183,8 +219,20 @@ const Page = (props: Props) => {
       </div>
 
       <div className='mt-8'>
-        <DataTable columns={columns} data={data || []} />
+        <DataTable columns={getColumns(handleEdit)} data={data || []} />
       </div>
+      {editItem && (
+        <EditDialog
+          item={editItem}
+          onClose={handleCloseEditDialog}
+          onSuccess={() => {
+            queryClient.invalidateQueries({
+              queryKey: ['menus', selectedSite]
+            });
+            handleCloseEditDialog();
+          }}
+        />
+      )}
     </div>
   );
 };

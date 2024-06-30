@@ -17,15 +17,21 @@ import { useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios, { AxiosError } from 'axios';
 import { toast } from 'sonner';
-const { DateTime, Settings } = require('luxon');
+const { DateTime } = require('luxon');
 
 type Props = {
   bookingModal: boolean;
   setBookingModal: (value: boolean) => void;
   booking: any;
+  site: any;
 };
 
-const AddBooking = ({ bookingModal, setBookingModal, booking }: Props) => {
+const AddBooking = ({
+  bookingModal,
+  setBookingModal,
+  booking,
+  site
+}: Props) => {
   const {
     register,
     handleSubmit,
@@ -38,6 +44,15 @@ const AddBooking = ({ bookingModal, setBookingModal, booking }: Props) => {
   const [selectedItems, setSelectedItems] = useState<
     { menu_id: number; quantity: number }[]
   >([]);
+  const [email, setEmail] = useState('');
+  const [userSearchResult, setUserSearchResult] = useState(null);
+  const [showCreateUserForm, setShowCreateUserForm] = useState(false);
+
+  const {
+    register: registerUser,
+    handleSubmit: handleSubmitUser,
+    formState: { errors: userErrors }
+  } = useForm();
 
   const {
     isPending,
@@ -48,11 +63,11 @@ const AddBooking = ({ bookingModal, setBookingModal, booking }: Props) => {
     queryKey: ['menus'],
     queryFn: () =>
       axios
-        .get(`${process.env.NEXT_PUBLIC_BASE_URL}/menus`)
+        .get(`${process.env.NEXT_PUBLIC_BASE_URL}/menus/site/${site}`)
         .then(res => res.data)
   });
 
-  const mutation = useMutation({
+  const bookingMutation = useMutation({
     onSuccess: res => {
       reset();
       queryClient.invalidateQueries({
@@ -76,7 +91,9 @@ const AddBooking = ({ bookingModal, setBookingModal, booking }: Props) => {
           }
         );
       } else {
-        // console.log('An error occurred:', error.message);
+        toast.error('An error occurred while creating booking', {
+          position: 'top-center'
+        });
       }
     },
     mutationFn: booking => {
@@ -149,7 +166,7 @@ const AddBooking = ({ bookingModal, setBookingModal, booking }: Props) => {
         minute: parseInt(minuteTime)
       }).toISO({ includeOffset: false }) + 'Z';
 
-    mutation.mutate({
+    bookingMutation.mutate({
       ...formData,
       startTime: formattedStartTime,
       endTime: formattedEndTime,
@@ -158,8 +175,28 @@ const AddBooking = ({ bookingModal, setBookingModal, booking }: Props) => {
         DateTime.now()
           .set({ hour: 0, minute: 0, second: 0, millisecond: 0 })
           .toISO({ includeOffset: false }) + 'Z',
-      menuOrders: selectedItems
+      menuOrders: selectedItems,
+      email,
+      phoneNumber: formData.phoneNumber,
+      firstName: formData.firstName,
+      lastName: formData.lastName
     });
+  };
+
+  const handleSearchEmail = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/users/email/${email}`
+      );
+      setUserSearchResult(response.data);
+      setShowCreateUserForm(false);
+    } catch (error) {
+      toast.error('User not found', {
+        position: 'top-center'
+      });
+      setUserSearchResult(null);
+      setShowCreateUserForm(true);
+    }
   };
 
   return (
@@ -210,6 +247,93 @@ const AddBooking = ({ bookingModal, setBookingModal, booking }: Props) => {
                     readOnly
                   />
                 </div>
+                <div className='grid grid-cols-4 items-center gap-4'>
+                  <Label htmlFor='email' className='text-left'>
+                    User
+                  </Label>
+                  <div className='col-span-3 flex items-center'>
+                    <Input
+                      id='email'
+                      placeholder='Search user by email'
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      className='flex-1'
+                    />
+                    <Button
+                      type='button'
+                      onClick={handleSearchEmail}
+                      className='ml-2'
+                      disabled={email.length === 0}
+                    >
+                      Search
+                    </Button>
+                  </div>
+                </div>
+                {userSearchResult && (
+                  <div className='grid grid-cols-4 items-center gap-4'>
+                    <Label htmlFor='user_info' className='text-left'>
+                      User Info
+                    </Label>
+                    <div className='col-span-3'>
+                      <p>
+                        <strong>ID:</strong>{' '}
+                        {userSearchResult.id || 'not defined'}
+                      </p>
+                      <p>
+                        <strong>Name:</strong>{' '}
+                        {userSearchResult.firstName || 'not defined'}{' '}
+                        {userSearchResult.lastName || 'not defined'}
+                      </p>
+                      <p>
+                        <strong>Email:</strong> {userSearchResult.email}
+                      </p>
+                      <p>
+                        <strong>Phone:</strong> {userSearchResult.phone_number}
+                      </p>
+                      {/* Display more user information as needed */}
+                    </div>
+                  </div>
+                )}
+                {showCreateUserForm && (
+                  <div className='grid grid-cols-4 gap-4'>
+                    <p className='col-span-4 text-sm text-red-500'>
+                      User is not found, please proceed to create a new user
+                    </p>
+                    <div className='grid grid-cols-4 col-span-4 items-center gap-4'>
+                      <Label htmlFor='phoneNumber' className='text-left'>
+                        Phone Number
+                      </Label>
+                      <Input
+                        {...register('phoneNumber', { required: true })}
+                        id='phoneNumber'
+                        placeholder='Enter phone number'
+                        className='col-span-3'
+                      />
+                    </div>
+                    <div className='grid grid-cols-4 col-span-4 items-center gap-4'>
+                      <Label htmlFor='firstName' className='text-left'>
+                        First Name
+                      </Label>
+                      <Input
+                        {...register('firstName', { required: true })}
+                        id='firstName'
+                        placeholder='Enter first name'
+                        className='col-span-3'
+                      />
+                    </div>
+                    <div className='grid grid-cols-4 col-span-4 items-center gap-4'>
+                      <Label htmlFor='lastName' className='text-left'>
+                        Last Name
+                      </Label>
+                      <Input
+                        {...register('lastName', { required: true })}
+                        id='lastName'
+                        placeholder='Enter last name'
+                        className='col-span-3'
+                      />
+                    </div>
+                  </div>
+                )}
                 <div className='grid grid-cols-4 gap-4'>
                   <Label htmlFor='room_id' className='text-left'>
                     Menu
@@ -221,10 +345,10 @@ const AddBooking = ({ bookingModal, setBookingModal, booking }: Props) => {
                       );
                       return (
                         <div
-                          className='col-span-4 grid grid-cols-5 gap-12'
+                          className='col-span-4 grid grid-cols-5 '
                           key={index}
                         >
-                          <p className='col-span-1'>{item?.name}</p>
+                          <p className='col-span-2'>{item?.name}</p>
                           <p className='col-span-1 '>
                             {item?.item_type.toLowerCase()}
                           </p>
@@ -275,9 +399,7 @@ const AddBooking = ({ bookingModal, setBookingModal, booking }: Props) => {
                 </div>
               </div>
               <DialogFooter>
-                <Button type='submit' onClick={() => {}}>
-                  Save
-                </Button>
+                <Button type='submit'>Save</Button>
               </DialogFooter>
             </form>
           </DialogContent>
