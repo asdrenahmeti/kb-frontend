@@ -471,6 +471,7 @@ const Page: React.FC = () => {
             setBookingModal={setBookingModal}
             booking={newBooking}
             site={selectedSite}
+            date={date}
           />
         )}
       </div>

@@ -118,7 +118,7 @@ const BookingGrid: React.FC<BookingGridProps> = ({
     const diffInMinutes = startTimeObj.diff(startHourObj, 'minutes').minutes;
     const leftPosition = (diffInMinutes / 5) * 30;
 
-    const adjustedLeftPosition = leftPosition / 2;
+    const adjustedLeftPosition = leftPosition;
     return adjustedLeftPosition;
   };
 
@@ -264,14 +264,13 @@ const BookingGrid: React.FC<BookingGridProps> = ({
                   >
                     <div
                       key={booking.id}
-                      className={`absolute rounded-full text-xs text-white flex items-center justify-between px-4 border h-[30px] top-[2.5px] shadow-sm cursor-pointer handle ${
+                      className={`absolute rounded-full text-xs text-white flex items-center justify-between px-4 border h-[30px] top-[2.5px] shadow-sm cursor-pointer handle left-[${left}px] ${
                         selectedBooking === booking
                           ? 'bg-blue-500'
                           : 'bg-kb-secondary'
                       }`}
                       style={{
                         width: `${width}px`,
-                        left: `${left}px`,
                         zIndex: 5
                       }}
                       onClick={e => handleBookingClick(booking, room)}

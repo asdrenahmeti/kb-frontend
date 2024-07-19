@@ -24,13 +24,15 @@ type Props = {
   setBookingModal: (value: boolean) => void;
   booking: any;
   site: any;
+  date: any;
 };
 
 const AddBooking = ({
   bookingModal,
   setBookingModal,
   booking,
-  site
+  site,
+  date
 }: Props) => {
   const {
     register,
