@@ -145,27 +145,35 @@ const AddBooking = ({
 
   const onSubmit = async (formData: any) => {
     const startTime = formData.startTime;
-    const [hour, minute] = startTime.split(':');
+    const [startHour, startMinute] = startTime.split(':');
+
+    const bookingDate = new Date(booking.date); // Parse the date string into a Date object
 
     const formattedStartTime =
       DateTime.fromObject({
-        year: booking.date.getFullYear(),
-        month: booking.date.getMonth() + 1,
-        day: booking.date.getDate(),
-        hour: parseInt(hour),
-        minute: parseInt(minute)
+        year: bookingDate.getFullYear(),
+        month: bookingDate.getMonth() + 1,
+        day: bookingDate.getDate(),
+        hour: parseInt(startHour),
+        minute: parseInt(startMinute)
       }).toISO({ includeOffset: false }) + 'Z';
 
     const endTime = formData.endTime;
-    const [hourTime, minuteTime] = endTime.split(':');
+    const [endHour, endMinute] = endTime.split(':');
+
+    let endDate = bookingDate;
+    if (parseInt(endHour) < parseInt(startHour)) {
+      endDate = new Date(bookingDate);
+      endDate.setDate(endDate.getDate() + 1);
+    }
 
     const formattedEndTime =
       DateTime.fromObject({
-        year: booking.date.getFullYear(),
-        month: booking.date.getMonth() + 1,
-        day: booking.date.getDate(),
-        hour: parseInt(hourTime),
-        minute: parseInt(minuteTime)
+        year: endDate.getFullYear(),
+        month: endDate.getMonth() + 1,
+        day: endDate.getDate(),
+        hour: parseInt(endHour),
+        minute: parseInt(endMinute)
       }).toISO({ includeOffset: false }) + 'Z';
 
     bookingMutation.mutate({
@@ -174,7 +182,7 @@ const AddBooking = ({
       endTime: formattedEndTime,
       roomId: booking.roomId,
       date:
-        DateTime.now()
+        DateTime.fromJSDate(date)
           .set({ hour: 0, minute: 0, second: 0, millisecond: 0 })
           .toISO({ includeOffset: false }) + 'Z',
       menuOrders: selectedItems,

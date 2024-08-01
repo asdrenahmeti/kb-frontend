@@ -69,14 +69,9 @@ const Booking: React.FC<BookingProps> = ({
 
   const handleDragEvent = (e: DraggableEvent, data: DraggableData) => {
     setIsDragging(true);
-    let newY = position.y + data.deltaY;
-    if (!yAdjusted) {
-      newY += 8;
-      setYAdjusted(true);
-    }
     setPosition({
       x: position.x + data.deltaX,
-      y: newY
+      y: position.y + data.deltaY
     });
   };
 
@@ -108,7 +103,11 @@ const Booking: React.FC<BookingProps> = ({
         if (newRoomIndex < 0) newRoomIndex = 0;
         if (newRoomIndex >= roomIds.length) newRoomIndex = roomIds.length - 1;
 
-        const newRoomId = roomIds[newRoomIndex];
+        // Ensure the newRoomId is set to the original room ID if the room hasn't changed
+        const newRoomId =
+          newRoomIndex === Math.round(initialPosition.y / roomHeight)
+            ? booking.roomId
+            : roomIds[newRoomIndex];
 
         const newBooking = handleDrag(
           { x: newPosition.x, y: newPosition.y },

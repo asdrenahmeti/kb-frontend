@@ -26,6 +26,7 @@ import CurrentTimeLine from './CurrentTimeLine';
 import BookingGrid from './BookingGrid';
 import AddBooking from './AddBooking';
 import DragConfirmModal from './DragConfirmModal';
+import ChangeBookingModal from './ChangeBookingModal';
 import { toast } from 'sonner';
 
 interface BookingData {
@@ -75,6 +76,8 @@ const Page: React.FC = () => {
     useState<boolean>(false);
   const [cancelDrag, setCancelDrag] = useState<boolean>(false);
   const [resetPosition, setResetPosition] = useState<boolean>(false);
+  const [showChangeBookingModal, setShowChangeBookingModal] =
+    useState<boolean>(false);
 
   const queryClient = useQueryClient();
 
@@ -112,33 +115,51 @@ const Page: React.FC = () => {
     const [startHour, startMinute] = startTime.split(':');
     const [endHour, endMinute] = endTime.split(':');
 
-    const formattedStartTime = DateTime.fromObject(
-      {
-        year: new Date(date).getFullYear(),
-        month: new Date(date).getMonth() + 1,
-        day: new Date(date).getDate(),
-        hour: parseInt(startHour),
-        minute: parseInt(startMinute)
-      },
-      { zone: 'utc' }
-    ).toISO();
+    const bookingDate = DateTime.fromISO(date, { zone: 'utc' });
 
-    const formattedEndTime = DateTime.fromObject(
-      {
-        year: new Date(date).getFullYear(),
-        month: new Date(date).getMonth() + 1,
-        day: new Date(date).getDate(),
-        hour: parseInt(endHour),
-        minute: parseInt(endMinute)
-      },
-      { zone: 'utc' }
-    ).toISO();
+    const formattedStartTime =
+      DateTime.fromObject(
+        {
+          year: bookingDate.year,
+          month: bookingDate.month,
+          day: bookingDate.day,
+          hour: parseInt(startHour),
+          minute: parseInt(startMinute)
+        },
+        { zone: 'utc' }
+      ).toISO({ includeOffset: false }) + 'Z';
+
+    // Calculate the end time based on the start time and duration
+    let startDateTime = DateTime.fromISO(formattedStartTime, { zone: 'utc' });
+    let endDateTime = startDateTime.plus({
+      hours: parseInt(endHour) - parseInt(startHour),
+      minutes: parseInt(endMinute) - parseInt(startMinute)
+    });
+
+    // Adjust the date if the new start time is before the opening hour or after the closing hour
+    const siteStartDateTime = DateTime.fromFormat(startHour, 'HH:mm', {
+      zone: 'utc'
+    });
+    const siteEndDateTime = DateTime.fromFormat(endHour, 'HH:mm', {
+      zone: 'utc'
+    });
+
+    if (startDateTime < siteStartDateTime) {
+      startDateTime = startDateTime.plus({ days: 1 });
+      endDateTime = endDateTime.plus({ days: 1 });
+    } else if (
+      startDateTime >= siteEndDateTime &&
+      siteEndDateTime < siteStartDateTime
+    ) {
+      startDateTime = startDateTime.plus({ days: 1 });
+      endDateTime = endDateTime.plus({ days: 1 });
+    }
 
     const formattedBooking: BookingData = {
       id,
-      startTime: formattedStartTime,
-      endTime: formattedEndTime,
-      date,
+      startTime: startDateTime.toISO({ includeOffset: false }) + 'Z',
+      endTime: endDateTime.toISO({ includeOffset: false }) + 'Z',
+      date: startDateTime.toISODate() + 'T00:00:00.000Z', // Ensure the date is in ISO-8601 format with 'Z'
       roomId, // Ensure the new roomId is included
       ...rest
     };
@@ -200,18 +221,18 @@ const Page: React.FC = () => {
     const selectedDateTime = DateTime.fromFormat(time, 'HH:mm', {
       zone: 'utc'
     });
-    const endDateTime = DateTime.fromFormat(endHour, 'HH:mm', { zone: 'utc' });
+    const startDateTime = DateTime.fromFormat(startHour, 'HH:mm', {
+      zone: 'utc'
+    });
+
+    // Adjust the date if the selected time is before the start hour
     const selectedDate =
-      (selectedDateTime.hour < endDateTime.hour &&
-        selectedDateTime.hour >=
-          DateTime.fromFormat(startHour, 'HH:mm', { zone: 'utc' }).hour) ||
-      (selectedDateTime.hour >= endDateTime.hour &&
-        endDateTime.hour <
-          DateTime.fromFormat(startHour, 'HH:mm', { zone: 'utc' }).hour)
-        ? date
-        : DateTime.fromISO(date as unknown as string)
+      selectedDateTime < startDateTime
+        ? DateTime.fromJSDate(date as Date)
             .plus({ days: 1 })
-            .toISODate();
+            .toISODate()
+        : DateTime.fromJSDate(date as Date).toISODate();
+
     const newBooking = {
       date: selectedDate,
       startTime: selectedDateTime.toFormat('HH:mm'),
@@ -255,21 +276,29 @@ const Page: React.FC = () => {
       minutes: totalMinutesFromStart
     });
 
-    const endDateTime = DateTime.fromFormat(endHour, 'HH:mm', { zone: 'utc' });
+    // Determine the new date based on the new time
+    let newStartTime = momentaryTime.set({
+      year: bookingStartDateTime.year,
+      month: bookingStartDateTime.month,
+      day: bookingStartDateTime.day
+    });
 
-    const selectedDate =
-      (momentaryTime.hour < endDateTime.hour &&
-        momentaryTime.hour >= startDateTime.hour) ||
-      (momentaryTime.hour >= endDateTime.hour &&
-        endDateTime.hour < startDateTime.hour)
-        ? DateTime.fromJSDate(date as Date).toISODate()
-        : DateTime.fromJSDate(date as Date)
-            .plus({ days: 1 })
-            .toISODate();
+    // If the new start time is before the start hour, it should be on the next day
+    if (newStartTime < startDateTime) {
+      newStartTime = newStartTime.plus({ days: 1 });
+    }
+
+    // Adjust the date if the new start time is after the end hour
+    const endDateTime = DateTime.fromFormat(endHour, 'HH:mm', {
+      zone: 'utc'
+    });
+    if (newStartTime >= endDateTime && endDateTime < startDateTime) {
+      newStartTime = newStartTime.plus({ days: 1 });
+    }
 
     const newBooking = {
-      date: selectedDate,
-      startTime: momentaryTime.toFormat('HH:mm'),
+      date: newStartTime.toISODate(),
+      startTime: newStartTime.toISO(),
       roomId: roomId
     };
 
@@ -278,7 +307,7 @@ const Page: React.FC = () => {
         id: '',
         startTime: bookingStartTime,
         endTime: '',
-        date: selectedDate
+        date: bookingStartDateTime.toISODate()
       },
       new: newBooking
     });
@@ -383,16 +412,18 @@ const Page: React.FC = () => {
                 ? `Active Selected Booking - ${activeBooking?.booking?.id}`
                 : 'No Active Booking'}
             </p>
-            <button
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className='text-blue-500'
-            >
-              {isCollapsed ? (
-                <PanelBottomOpen color='white' />
-              ) : (
-                <PanelTopOpen color='white' />
-              )}
-            </button>
+            <div className='flex gap-2'>
+              <button
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className='text-blue-500'
+              >
+                {isCollapsed ? (
+                  <PanelBottomOpen color='white' />
+                ) : (
+                  <PanelTopOpen color='white' />
+                )}
+              </button>
+            </div>
           </div>
           {!isCollapsed && activeBooking && (
             <div className='grid grid-cols-3 gap-4 p-4'>
@@ -450,6 +481,16 @@ const Page: React.FC = () => {
                   <p className='font-light'>{activeBooking?.room?.capacity}</p>
                 </div>
               </div>
+              <div className='col-span-1'>
+                {activeBooking && (
+                  <Button
+                    onClick={() => setShowChangeBookingModal(true)}
+                    className=' bg-kb-primary hover:bg-kb-secondary'
+                  >
+                    Change Booking
+                  </Button>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -472,6 +513,14 @@ const Page: React.FC = () => {
             booking={newBooking}
             site={selectedSite}
             date={date}
+          />
+        )}
+
+        {showChangeBookingModal && activeBooking && (
+          <ChangeBookingModal
+            showModal={showChangeBookingModal}
+            setShowModal={setShowChangeBookingModal}
+            booking={activeBooking.booking}
           />
         )}
       </div>

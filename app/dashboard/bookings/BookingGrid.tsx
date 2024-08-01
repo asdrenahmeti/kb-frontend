@@ -90,6 +90,7 @@ const BookingGrid: React.FC<BookingGridProps> = ({
     null
   );
   const [isDragging, setIsDragging] = useState<boolean>(false);
+  const roomHeight = 35; // Define the room height
 
   useEffect(() => {
     if (startHour && endHour) {
@@ -111,15 +112,19 @@ const BookingGrid: React.FC<BookingGridProps> = ({
   ): number => {
     const startTimeObj = DateTime.fromISO(startTime, { zone: 'utc' });
     const startDate = startTimeObj.toISODate();
-    const startHourObj = DateTime.fromISO(`${startDate}T${startHour}:00.000Z`, {
+    let startHourObj = DateTime.fromISO(`${startDate}T${startHour}:00.000Z`, {
       zone: 'utc'
     });
+
+    // Adjust for cases where the start time is before the start hour
+    if (startTimeObj < startHourObj) {
+      startHourObj = startHourObj.minus({ days: 1 });
+    }
 
     const diffInMinutes = startTimeObj.diff(startHourObj, 'minutes').minutes;
     const leftPosition = (diffInMinutes / 5) * 30;
 
-    const adjustedLeftPosition = leftPosition;
-    return adjustedLeftPosition;
+    return leftPosition;
   };
 
   useEffect(() => {
@@ -132,8 +137,35 @@ const BookingGrid: React.FC<BookingGridProps> = ({
     }
   }, [data, startHour]);
 
+  const handleDrag = (
+    momentaryPosition: { x: number; y: number },
+    roomId: string,
+    bookingStartTime: string
+  ) => {
+    const roomIndex = data?.rooms.findIndex(room => room.id === roomId);
+    if (roomIndex !== undefined && roomIndex >= 0) {
+      const rowsToConsider = 2; // Number of rows to allow dragging within
+      const startRowIndex =
+        Math.floor(roomIndex / rowsToConsider) * rowsToConsider;
+      const endRowIndex = startRowIndex + rowsToConsider;
+
+      const roomTop = startRowIndex * roomHeight;
+      const roomBottom = endRowIndex * roomHeight;
+
+      if (momentaryPosition.y >= roomTop && momentaryPosition.y < roomBottom) {
+        handleBoxDrag(momentaryPosition, roomId, bookingStartTime);
+      } else {
+        // Reset position if dragged outside the allowed rows
+        setDraggedBooking({
+          old: { id: '', startTime: '', endTime: '', roomId: '' },
+          new: { id: '', startTime: '', endTime: '', roomId: '' }
+        });
+        setShowDragConfirmModal(false);
+      }
+    }
+  };
+
   const roomIds = data?.rooms.map(room => room.id) || [];
-  const roomHeight = 35; // Define the room height
 
   return (
     <div className='relative mt-8 w-full'>
@@ -154,7 +186,7 @@ const BookingGrid: React.FC<BookingGridProps> = ({
         {data?.rooms?.map((room, roomIndex) => (
           <div
             key={room.id}
-            className='relative w-full grid grid-cols-[120px_auto] mb-2'
+            className='relative w-full grid grid-cols-[120px_auto]'
           >
             <div
               className={`h-[${roomHeight}px] w-[120px] rounded-tl-md rounded-bl-md text-sm bg-kb-primary text-white pl-2 flex items-center font-semibold sticky`}
@@ -193,7 +225,7 @@ const BookingGrid: React.FC<BookingGridProps> = ({
 
                     return (
                       (boxTime >= bookingStart && boxTime < bookingEnd) ||
-                      boxTime.equals(bookingStart.minus({ minutes: 5 })) ||
+                      boxTime.equals(bookingStart) ||
                       boxTime.equals(bookingEnd)
                     );
                   });
@@ -213,7 +245,7 @@ const BookingGrid: React.FC<BookingGridProps> = ({
                         }
                       }}
                     >
-                      <div className='absolute top-100% transform -translate-y-full left-1/2 -translate-x-1/2 w-max px-2 py-1 text-xs text-white bg-black rounded opacity-0 group-hover:opacity-100 transition-opacity z-10'>
+                      <div className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-max px-2 py-1 text-xs text-white bg-black rounded opacity-0 group-hover:opacity-100 transition-opacity z-10'>
                         {currentTimeISO}
                       </div>
                     </div>
@@ -248,11 +280,7 @@ const BookingGrid: React.FC<BookingGridProps> = ({
                     left={left}
                     boxWidth={30}
                     handleDrag={momentaryPosition =>
-                      handleBoxDrag(
-                        momentaryPosition,
-                        room.id,
-                        booking.startTime
-                      )
+                      handleDrag(momentaryPosition, room.id, booking.startTime)
                     }
                     resetPosition={resetPosition}
                     setDraggedBooking={setDraggedBooking}
@@ -264,20 +292,22 @@ const BookingGrid: React.FC<BookingGridProps> = ({
                   >
                     <div
                       key={booking.id}
-                      className={`absolute rounded-full text-xs text-white flex items-center justify-between px-4 border h-[30px] top-[2.5px] shadow-sm cursor-pointer handle left-[${left}px] ${
+                      className={`absolute rounded-full text-xs text-white flex items-center justify-between px-4 border h-[35px] shadow-sm cursor-pointer handle left-[${left}px] ${
                         selectedBooking === booking
                           ? 'bg-blue-500'
                           : 'bg-kb-secondary'
                       }`}
                       style={{
                         width: `${width}px`,
-                        zIndex: 5
+                        zIndex: 15 // Ensure the booking is above the boxes
                       }}
                       onClick={e => handleBookingClick(booking, room)}
                     >
                       {startTime.toFormat('HH:mm')} -{' '}
                       {endTime.toFormat('HH:mm')}
-                      <p className='font-semibold'>User 1</p>
+                      <p className='font-semibold'>
+                        {booking?.user?.firstName} {booking?.user?.lastName}
+                      </p>
                     </div>
                   </Booking>
                 );
