@@ -79,6 +79,8 @@ const Page: React.FC = () => {
   const [showChangeBookingModal, setShowChangeBookingModal] =
     useState<boolean>(false);
 
+  const currentDate = date ? DateTime.fromJSDate(date).toISODate() : '';
+
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -396,6 +398,7 @@ const Page: React.FC = () => {
                 setShowDragConfirmModal={setShowDragConfirmModal}
                 cancelDrag={cancelDrag}
                 resetPosition={resetPosition}
+                currentDate={currentDate}
               />
             </>
           )}

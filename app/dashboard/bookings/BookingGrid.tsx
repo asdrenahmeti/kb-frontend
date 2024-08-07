@@ -21,7 +21,7 @@ interface Data {
 }
 
 interface BookingGridProps {
-  data: Data | null;
+  data: any;
   startHour: string;
   endHour: string;
   handleBoxClick: (time: string, roomId: string, roomName: string) => void;
@@ -29,12 +29,13 @@ interface BookingGridProps {
     momentaryPosition: { x: number; y: number },
     roomId: string,
     bookingStartTime: string
-  ) => any;
-  setActiveBooking: (booking: { booking: BookingData; room: Room }) => void;
-  setDraggedBooking: (booking: { old: BookingData; new: BookingData }) => void;
+  ) => void;
+  setActiveBooking: (booking: any) => void;
+  setDraggedBooking: (booking: any) => void;
   setShowDragConfirmModal: (show: boolean) => void;
   cancelDrag: boolean;
   resetPosition: boolean;
+  currentDate: string;
 }
 
 const generateTimeIntervals = (
@@ -83,7 +84,8 @@ const BookingGrid: React.FC<BookingGridProps> = ({
   setDraggedBooking,
   setShowDragConfirmModal,
   cancelDrag,
-  resetPosition
+  resetPosition,
+  currentDate
 }) => {
   const [timeIntervals, setTimeIntervals] = useState<string[]>([]);
   const [selectedBooking, setSelectedBooking] = useState<BookingData | null>(
@@ -129,8 +131,8 @@ const BookingGrid: React.FC<BookingGridProps> = ({
 
   useEffect(() => {
     if (data) {
-      data.rooms.forEach(room => {
-        room.bookings.forEach(booking => {
+      data.rooms.forEach((room: any) => {
+        room.bookings.forEach((booking: any) => {
           booking.left = calculateLeftPosition(booking.startTime, startHour);
         });
       });
@@ -142,7 +144,7 @@ const BookingGrid: React.FC<BookingGridProps> = ({
     roomId: string,
     bookingStartTime: string
   ) => {
-    const roomIndex = data?.rooms.findIndex(room => room.id === roomId);
+    const roomIndex = data?.rooms.findIndex((room: any) => room.id === roomId);
     if (roomIndex !== undefined && roomIndex >= 0) {
       const rowsToConsider = 2; // Number of rows to allow dragging within
       const startRowIndex =
@@ -165,7 +167,7 @@ const BookingGrid: React.FC<BookingGridProps> = ({
     }
   };
 
-  const roomIds = data?.rooms.map(room => room.id) || [];
+  const roomIds = data?.rooms.map((room: any) => room.id) || [];
 
   return (
     <div className='relative mt-8 w-full'>
@@ -183,14 +185,14 @@ const BookingGrid: React.FC<BookingGridProps> = ({
       </div>
 
       <div className='relative w-full'>
-        {data?.rooms?.map((room, roomIndex) => (
+        {data?.rooms?.map((room: any, roomIndex: any) => (
           <div
             key={room.id}
-            className='relative w-full grid grid-cols-[120px_auto]'
+            className='relative w-full grid grid-cols-[120px_1fr]'
           >
             <div
-              className={`h-[${roomHeight}px] w-[120px] rounded-tl-md rounded-bl-md text-sm bg-kb-primary text-white pl-2 flex items-center font-semibold sticky`}
-              style={{ left: '0', zIndex: 10 }}
+              className={`h-[${roomHeight}px] w-[120px] rounded-tl-md rounded-bl-md text-sm bg-kb-primary text-white pl-2 flex items-center font-semibold sticky left-0`}
+              style={{ zIndex: 200 }}
             >
               {room.name}
             </div>
@@ -210,24 +212,20 @@ const BookingGrid: React.FC<BookingGridProps> = ({
 
                   const roomBookings = room?.bookings || [];
 
-                  const isDisabled = roomBookings.some(booking => {
+                  const isDisabled = roomBookings.some((booking: any) => {
                     const bookingStart = DateTime.fromISO(booking.startTime, {
                       zone: 'utc'
-                    });
+                    }).minus({ minutes: 5 });
                     const bookingEnd = DateTime.fromISO(booking.endTime, {
                       zone: 'utc'
-                    });
+                    }).plus({ minutes: 5 });
                     const boxTime = DateTime.fromFormat(
-                      currentTimeISO,
-                      'HH:mm',
+                      `${currentDate}T${currentTimeISO}`,
+                      "yyyy-MM-dd'T'HH:mm",
                       { zone: 'utc' }
                     );
 
-                    return (
-                      (boxTime >= bookingStart && boxTime < bookingEnd) ||
-                      boxTime.equals(bookingStart) ||
-                      boxTime.equals(bookingEnd)
-                    );
+                    return boxTime >= bookingStart && boxTime < bookingEnd;
                   });
 
                   return (
@@ -253,7 +251,7 @@ const BookingGrid: React.FC<BookingGridProps> = ({
                 }
               )}
 
-              {room?.bookings?.map((booking, bookingIndex) => {
+              {room?.bookings?.map((booking: any, bookingIndex: any) => {
                 const startTime = DateTime.fromISO(booking.startTime, {
                   zone: 'utc'
                 });
