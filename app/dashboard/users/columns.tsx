@@ -1,4 +1,5 @@
 import { ColumnDef } from '@tanstack/react-table';
+import { Button } from '@/components/ui/button';
 
 export type User = {
   id: string;
@@ -8,7 +9,9 @@ export type User = {
   role: string;
 };
 
-export const columns: ColumnDef<User>[] = [
+export const getColumns = (
+  handleChangePassword: (id: string) => void
+): ColumnDef<User>[] => [
   {
     accessorKey: 'firstName',
     header: 'First Name'
@@ -24,5 +27,19 @@ export const columns: ColumnDef<User>[] = [
   {
     accessorKey: 'role',
     header: 'Role'
+  },
+  {
+    id: 'actions',
+    header: 'Actions',
+    cell: ({ row }) => (
+      <Button
+        onClick={() =>
+          handleChangePassword && handleChangePassword(row.original.id)
+        }
+        className='bg-kb-primary hover:bg-kb-secondary'
+      >
+        Change Password
+      </Button>
+    )
   }
 ];

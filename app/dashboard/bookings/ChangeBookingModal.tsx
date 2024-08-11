@@ -20,12 +20,14 @@ import { toast } from 'sonner';
 interface ChangeBookingModalProps {
   showModal: boolean;
   setShowModal: (show: boolean) => void;
+  setActiveBooking: (booking: any) => void;
   booking: any;
 }
 
 const ChangeBookingModal: React.FC<ChangeBookingModalProps> = ({
   showModal,
   setShowModal,
+  setActiveBooking,
   booking
 }) => {
   const queryClient = useQueryClient();
@@ -40,6 +42,7 @@ const ChangeBookingModal: React.FC<ChangeBookingModalProps> = ({
 
   const mutation = useMutation({
     onSuccess: res => {
+      setActiveBooking(null);
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
       toast.success('Booking updated successfully');
     },

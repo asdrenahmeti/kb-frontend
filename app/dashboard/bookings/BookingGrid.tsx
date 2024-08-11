@@ -191,8 +191,8 @@ const BookingGrid: React.FC<BookingGridProps> = ({
             className='relative w-full grid grid-cols-[120px_1fr]'
           >
             <div
-              className={`h-[${roomHeight}px] w-[120px] rounded-tl-md rounded-bl-md text-sm bg-kb-primary text-white pl-2 flex items-center font-semibold sticky left-0`}
-              style={{ zIndex: 200 }}
+              className={`h-[${roomHeight}px] w-[120px] rounded-tl-md rounded-bl-md text-sm bg-kb-primary text-white pl-2 flex items-center font-semibold fixed left-[230px]`}
+              style={{ zIndex: 30 }}
             >
               {room.name}
             </div>

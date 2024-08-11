@@ -28,6 +28,7 @@ import AddBooking from './AddBooking';
 import DragConfirmModal from './DragConfirmModal';
 import ChangeBookingModal from './ChangeBookingModal';
 import { toast } from 'sonner';
+import DeleteBookingModal from './DeleteBookingModal';
 
 interface BookingData {
   id: string;
@@ -77,6 +78,8 @@ const Page: React.FC = () => {
   const [cancelDrag, setCancelDrag] = useState<boolean>(false);
   const [resetPosition, setResetPosition] = useState<boolean>(false);
   const [showChangeBookingModal, setShowChangeBookingModal] =
+    useState<boolean>(false);
+  const [showDeleteBookingModal, setShowDeleteBookingModal] =
     useState<boolean>(false);
 
   const currentDate = date ? DateTime.fromJSDate(date).toISODate() : '';
@@ -484,13 +487,22 @@ const Page: React.FC = () => {
                   <p className='font-light'>{activeBooking?.room?.capacity}</p>
                 </div>
               </div>
-              <div className='col-span-1'>
+              <div className='col-span-1 grid-rows-3 grid max-w-[200px]'>
                 {activeBooking && (
                   <Button
                     onClick={() => setShowChangeBookingModal(true)}
                     className=' bg-kb-primary hover:bg-kb-secondary'
                   >
                     Change Booking
+                  </Button>
+                )}
+
+                {activeBooking && (
+                  <Button
+                    onClick={() => setShowDeleteBookingModal(true)}
+                    className=' bg-kb-primary hover:bg-kb-secondary'
+                  >
+                    Delete
                   </Button>
                 )}
               </div>
@@ -524,6 +536,16 @@ const Page: React.FC = () => {
             showModal={showChangeBookingModal}
             setShowModal={setShowChangeBookingModal}
             booking={activeBooking.booking}
+            setActiveBooking={setActiveBooking}
+          />
+        )}
+
+        {showDeleteBookingModal && activeBooking && (
+          <DeleteBookingModal
+            showModal={showDeleteBookingModal}
+            setShowModal={setShowDeleteBookingModal}
+            bookingId={activeBooking.booking.id}
+            setActiveBooking={setActiveBooking}
           />
         )}
       </div>

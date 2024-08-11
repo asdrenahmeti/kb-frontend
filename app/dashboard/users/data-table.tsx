@@ -5,7 +5,8 @@ import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
-  useReactTable
+  useReactTable,
+  getFilteredRowModel
 } from '@tanstack/react-table';
 import {
   Table,
@@ -19,16 +20,22 @@ import {
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  globalFilter: string;
 }
 
 export function DataTable<TData, TValue>({
   columns,
-  data
+  data,
+  globalFilter
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
     columns,
-    getCoreRowModel: getCoreRowModel()
+    state: {
+      globalFilter
+    },
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel()
   });
 
   return (

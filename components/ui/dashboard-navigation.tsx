@@ -31,6 +31,11 @@ const navigation = [
     name: 'Booking',
     href: '/dashboard/bookings',
     icon: FolderIcon
+  },
+  {
+    name: 'Users',
+    href: '/dashboard/users',
+    icon: UsersIcon
   }
 ];
 

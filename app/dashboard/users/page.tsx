@@ -1,6 +1,25 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import axios from 'axios';
+import { useForm, Controller } from 'react-hook-form';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogTrigger
+} from '@/components/ui/dialog';
+import { DataTable } from './data-table';
+import { getColumns } from './columns';
+import { toast } from 'sonner';
+import ChangePasswordModal from './ChangePasswordModal';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -9,33 +28,14 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  QueryClient,
-  QueryClientProvider,
-  useQueryClient,
-  useQuery,
-  useMutation
-} from '@tanstack/react-query';
-import axios from 'axios';
-import { DataTable } from './data-table';
-import { Button } from '@/components/ui/button';
-import { useForm, Controller } from 'react-hook-form';
-import { toast } from 'sonner';
-import { columns } from './columns';
 
 const Page = () => {
   const [userModal, setUserModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [changePasswordModal, setChangePasswordModal] = useState({
+    isOpen: false,
+    userId: ''
+  });
   const queryClient = useQueryClient();
 
   const {
@@ -48,7 +48,7 @@ const Page = () => {
 
   const mutation = useMutation({
     onSuccess: data => {
-      console.log('User added successfully:', data); // Log success response
+      console.log('User added successfully:', data);
       queryClient.invalidateQueries({ queryKey: ['users'] });
       reset();
       setUserModal(false);
@@ -57,13 +57,13 @@ const Page = () => {
       });
     },
     onError: error => {
-      console.error('Error while creating the user:', error); // Log error response
+      console.error('Error while creating the user:', error);
       toast.error('Error while creating the user', {
         position: 'top-center'
       });
     },
     mutationFn: (formData: any) => {
-      console.log('Submitting form data:', formData); // Log form data
+      console.log('Submitting form data:', formData);
       return axios.post(
         `${process.env.NEXT_PUBLIC_BASE_URL}/users/create-account`,
         formData
@@ -84,11 +84,23 @@ const Page = () => {
         .then(res => res.data)
   });
 
+  const handleChangePassword = (userId: string) => {
+    setChangePasswordModal({ isOpen: true, userId });
+  };
+
+  const columns = getColumns(handleChangePassword);
+
   return (
     <div>
       <h1 className='text-2xl font-medium mb-4'>Manage Users</h1>
 
-      <div className='flex justify-between items-center'>
+      <div className='flex justify-between items-center mb-4'>
+        <Input
+          type='text'
+          placeholder='Search users...'
+          onChange={e => setSearchTerm(e.target.value)}
+          className='w-1/3'
+        />
         <Dialog
           open={userModal}
           onOpenChange={() => {
@@ -220,8 +232,18 @@ const Page = () => {
       </div>
 
       <div className='mt-8'>
-        <DataTable columns={columns} data={users || []} />
+        <DataTable
+          columns={columns}
+          data={users || []}
+          globalFilter={searchTerm}
+        />
       </div>
+
+      <ChangePasswordModal
+        isOpen={changePasswordModal.isOpen}
+        onClose={() => setChangePasswordModal({ isOpen: false, userId: '' })}
+        userId={changePasswordModal.userId}
+      />
     </div>
   );
 };

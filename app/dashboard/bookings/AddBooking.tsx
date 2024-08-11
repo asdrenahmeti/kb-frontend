@@ -1,6 +1,6 @@
 /* eslint-disable */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -38,7 +38,8 @@ const AddBooking = ({
     register,
     handleSubmit,
     reset,
-    formState: { errors }
+    formState: { errors },
+    watch
   } = useForm();
 
   const queryClient = useQueryClient();
@@ -49,6 +50,7 @@ const AddBooking = ({
   const [email, setEmail] = useState('');
   const [userSearchResult, setUserSearchResult] = useState(null);
   const [showCreateUserForm, setShowCreateUserForm] = useState(false);
+  const [calculatedPrice, setCalculatedPrice] = useState(0);
 
   const {
     register: registerUser,
@@ -134,7 +136,7 @@ const AddBooking = ({
     });
   };
 
-  const calculateTotalPrice = useMemo(() => {
+  const menuPrice = useMemo(() => {
     return selectedItems.reduce((total, selectedItem) => {
       const menuItem = menu.find(
         (item: any) => item.id === selectedItem.menu_id
@@ -142,6 +144,69 @@ const AddBooking = ({
       return total + (menuItem ? menuItem.price * selectedItem.quantity : 0);
     }, 0);
   }, [selectedItems, menu]);
+
+  const totalPrice = useMemo(() => {
+    return (calculatedPrice || 0) + menuPrice;
+  }, [calculatedPrice, menuPrice]);
+
+  const calculatePrice = async (startTime: string, endTime: string) => {
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/bookings/calculate-price`,
+        {
+          roomId: booking.roomId,
+          startTime,
+          endTime
+        }
+      );
+      setCalculatedPrice(response.data);
+    } catch (error) {
+      toast.error('Failed to calculate price', {
+        position: 'top-center'
+      });
+    }
+  };
+
+  const handleTimeChange = (startTime: string, endTime: string) => {
+    calculatePrice(startTime, endTime);
+  };
+
+  useEffect(() => {
+    const startTime = watch('startTime');
+    const endTime = watch('endTime');
+    if (startTime && endTime) {
+      const [startHour, startMinute] = startTime.split(':');
+      const [endHour, endMinute] = endTime.split(':');
+
+      const bookingDate = new Date(booking.date); // Parse the date string into a Date object
+
+      const formattedStartTime =
+        DateTime.fromObject({
+          year: bookingDate.getFullYear(),
+          month: bookingDate.getMonth() + 1,
+          day: bookingDate.getDate(),
+          hour: parseInt(startHour),
+          minute: parseInt(startMinute)
+        }).toISO({ includeOffset: false }) + 'Z';
+
+      let endDate = bookingDate;
+      if (parseInt(endHour) < parseInt(startHour)) {
+        endDate = new Date(bookingDate);
+        endDate.setDate(endDate.getDate() + 1);
+      }
+
+      const formattedEndTime =
+        DateTime.fromObject({
+          year: endDate.getFullYear(),
+          month: endDate.getMonth() + 1,
+          day: endDate.getDate(),
+          hour: parseInt(endHour),
+          minute: parseInt(endMinute)
+        }).toISO({ includeOffset: false }) + 'Z';
+
+      handleTimeChange(formattedStartTime, formattedEndTime);
+    }
+  }, [watch('startTime'), watch('endTime')]);
 
   const onSubmit = async (formData: any) => {
     const startTime = formData.startTime;
@@ -401,10 +466,26 @@ const AddBooking = ({
                 </div>
                 <div className='grid grid-cols-4 gap-4 items-center'>
                   <Label htmlFor='total_price' className='text-left'>
+                    Booking Price
+                  </Label>
+                  <div className='col-span-3 font-medium items-center'>
+                    {calculatedPrice?.toFixed(2)} £
+                  </div>
+                </div>
+                <div className='grid grid-cols-4 gap-4 items-center'>
+                  <Label htmlFor='menu_price' className='text-left'>
+                    Menu Price
+                  </Label>
+                  <div className='col-span-3 font-medium items-center'>
+                    {menuPrice?.toFixed(2)} £
+                  </div>
+                </div>
+                <div className='grid grid-cols-4 gap-4 items-center'>
+                  <Label htmlFor='total_price' className='text-left'>
                     Total Price
                   </Label>
                   <div className='col-span-3 font-medium items-center'>
-                    {calculateTotalPrice.toFixed(2)} £
+                    {totalPrice?.toFixed(2)} £
                   </div>
                 </div>
               </div>
