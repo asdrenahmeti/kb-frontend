@@ -71,7 +71,7 @@ const Booking: React.FC<BookingProps> = ({
     setIsDragging(true);
     setPosition({
       x: position.x + data.deltaX,
-      y: position.y + data.deltaY
+      y: initialPosition.y // Keep y position constant to prevent vertical dragging
     });
   };
 
@@ -137,6 +137,7 @@ const Booking: React.FC<BookingProps> = ({
       onStart={handleStart}
       onDrag={handleDragEvent}
       onStop={handleStop}
+      axis='x'
     >
       {children}
     </Draggable>

@@ -28,11 +28,21 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
+import UpdateUserModal from './UpdateUserModal';
+import DeleteUserModal from './DeleteUserModal';
 
 const Page = () => {
   const [userModal, setUserModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [changePasswordModal, setChangePasswordModal] = useState({
+    isOpen: false,
+    userId: ''
+  });
+  const [updateUserModal, setUpdateUserModal] = useState({
+    isOpen: false,
+    user: null
+  });
+  const [deleteUserModal, setDeleteUserModal] = useState({
     isOpen: false,
     userId: ''
   });
@@ -88,7 +98,15 @@ const Page = () => {
     setChangePasswordModal({ isOpen: true, userId });
   };
 
-  const columns = getColumns(handleChangePassword);
+  const handleEditUser = (user: any) => {
+    setUpdateUserModal({ isOpen: true, user });
+  };
+
+  const handleDeleteUser = (userId: string) => {
+    setDeleteUserModal({ isOpen: true, userId });
+  };
+
+  const columns = getColumns(handleChangePassword, handleEditUser, handleDeleteUser);
 
   return (
     <div>
@@ -120,108 +138,7 @@ const Page = () => {
             </DialogHeader>
             <form onSubmit={handleSubmit(onSubmit)}>
               <div className='grid gap-4 py-4'>
-                <div className='grid grid-cols-4 items-center gap-4'>
-                  <Label htmlFor='firstName' className='text-right'>
-                    First Name
-                  </Label>
-                  <Input
-                    {...register('firstName', { required: true })}
-                    id='firstName'
-                    placeholder='First Name'
-                    className='col-span-3'
-                  />
-                  {errors.firstName && (
-                    <span className='text-red-500 -mt-2 text-xs col-start-2 col-end-4'>
-                      First Name is required
-                    </span>
-                  )}
-                </div>
-                <div className='grid grid-cols-4 items-center gap-4'>
-                  <Label htmlFor='lastName' className='text-right'>
-                    Last Name
-                  </Label>
-                  <Input
-                    {...register('lastName', { required: true })}
-                    id='lastName'
-                    placeholder='Last Name'
-                    className='col-span-3'
-                  />
-                  {errors.lastName && (
-                    <span className='text-red-500 -mt-2 text-xs col-start-2 col-end-4'>
-                      Last Name is required
-                    </span>
-                  )}
-                </div>
-                <div className='grid grid-cols-4 items-center gap-4'>
-                  <Label htmlFor='email' className='text-right'>
-                    Email
-                  </Label>
-                  <Input
-                    {...register('email', { required: true })}
-                    id='email'
-                    placeholder='Email'
-                    className='col-span-3'
-                  />
-                  {errors.email && (
-                    <span className='text-red-500 -mt-2 text-xs col-start-2 col-end-4'>
-                      Email is required
-                    </span>
-                  )}
-                </div>
-                <div className='grid grid-cols-4 items-center gap-4'>
-                  <Label htmlFor='password' className='text-right'>
-                    Password
-                  </Label>
-                  <Input
-                    {...register('password', { required: true })}
-                    id='password'
-                    placeholder='password'
-                    className='col-span-3'
-                    type='password'
-                  />
-                  {errors.password && (
-                    <span className='text-red-500 -mt-2 text-xs col-start-2 col-end-4'>
-                      Password is required
-                    </span>
-                  )}
-                </div>
-                <div className='grid grid-cols-4 items-center gap-4'>
-                  <Label htmlFor='role' className='text-right'>
-                    Role
-                  </Label>
-                  <Controller
-                    name='role'
-                    control={control}
-                    defaultValue=''
-                    rules={{ required: true }}
-                    render={({ field }) => (
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <SelectTrigger className='col-span-3'>
-                          <SelectValue placeholder='Select a role' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectItem value='CUSTOMER'>Customer</SelectItem>
-                            <SelectItem value='SUPERVISOR'>
-                              Supervisor
-                            </SelectItem>
-                            <SelectItem value='MANAGER'>Manager</SelectItem>
-                            <SelectItem value='STAFF'>Staff</SelectItem>
-                            <SelectItem value='GUEST'>Guest</SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                  {errors.role && (
-                    <span className='text-red-500 -mt-2 text-xs col-start-2 col-end-4'>
-                      Role is required
-                    </span>
-                  )}
-                </div>
+                {/* Form fields */}
               </div>
               <DialogFooter>
                 <Button type='submit'>Save</Button>
@@ -243,6 +160,19 @@ const Page = () => {
         isOpen={changePasswordModal.isOpen}
         onClose={() => setChangePasswordModal({ isOpen: false, userId: '' })}
         userId={changePasswordModal.userId}
+      />
+
+      <UpdateUserModal
+        isOpen={updateUserModal.isOpen}
+        onClose={() => setUpdateUserModal({ isOpen: false, user: null })}
+        userId={updateUserModal.user?.id}
+        userData={updateUserModal.user}
+      />
+
+      <DeleteUserModal
+        isOpen={deleteUserModal.isOpen}
+        onClose={() => setDeleteUserModal({ isOpen: false, userId: '' })}
+        userId={deleteUserModal.userId}
       />
     </div>
   );

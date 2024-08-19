@@ -1,6 +1,4 @@
-'use client';
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -13,9 +11,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
 import { DateTime } from 'luxon';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup } from '@/components/ui/select';
 
 interface ChangeBookingModalProps {
   showModal: boolean;
@@ -39,8 +38,37 @@ const ChangeBookingModal: React.FC<ChangeBookingModalProps> = ({
     booking?.endTime ? booking.endTime.substring(11, 16) : ''
   );
   const [date, setDate] = useState<Date | undefined>(new Date(booking?.date));
+  const [room, setRoom] = useState(booking?.roomId || '');
+
+  const { data: rooms, isLoading: roomsLoading } = useQuery({
+    queryKey: ['rooms'],
+    queryFn: async () => {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URL}/rooms`);
+      return response.data;
+    }
+  });
 
   const mutation = useMutation({
+    mutationFn: ({
+      id,
+      startTime,
+      endTime,
+      date,
+      roomId
+    }: {
+      id: string;
+      startTime: string;
+      endTime: string;
+      date: string;
+      roomId: string;
+    }) => {
+      return axios.patch(`${process.env.NEXT_PUBLIC_BASE_URL}/bookings/${id}`, {
+        startTime,
+        endTime,
+        date,
+        roomId
+      });
+    },
     onSuccess: res => {
       setActiveBooking(null);
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
@@ -57,23 +85,6 @@ const ChangeBookingModal: React.FC<ChangeBookingModalProps> = ({
       } else {
         console.error('An error occurred:', error.message);
       }
-    },
-    mutationFn: ({
-      id,
-      startTime,
-      endTime,
-      date
-    }: {
-      id: string;
-      startTime: string;
-      endTime: string;
-      date: string;
-    }) => {
-      return axios.patch(`${process.env.NEXT_PUBLIC_BASE_URL}/bookings/${id}`, {
-        startTime,
-        endTime,
-        date
-      });
     }
   });
 
@@ -106,7 +117,8 @@ const ChangeBookingModal: React.FC<ChangeBookingModalProps> = ({
       date:
         DateTime.fromJSDate(date)
           .set({ hour: 0, minute: 0, second: 0, millisecond: 0 })
-          .toISO({ includeOffset: false }) + 'Z'
+          .toISO({ includeOffset: false }) + 'Z',
+      roomId: room
     };
 
     mutation.mutate(updatedBooking);
@@ -158,6 +170,25 @@ const ChangeBookingModal: React.FC<ChangeBookingModalProps> = ({
               initialFocus
               className='col-span-3'
             />
+          </div>
+          <div className='grid grid-cols-4 items-center gap-4'>
+            <label htmlFor='room' className='text-left'>
+              Room
+            </label>
+            <Select onValueChange={setRoom} value={room}>
+              <SelectTrigger className='col-span-3'>
+                <SelectValue placeholder='Select a room' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {rooms?.map((room: any) => (
+                    <SelectItem key={room.id} value={room.id}>
+                      {room.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
         </div>
         <DialogFooter>
