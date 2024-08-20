@@ -1,5 +1,5 @@
-import ImageCell from './ImageCell';
-import { ColumnDef } from '@tanstack/react-table';
+import ImageCell from "./ImageCell";
+import { ColumnDef } from "@tanstack/react-table";
 
 export type Rooms = {
   id: string;
@@ -20,29 +20,43 @@ export type Rooms = {
   image: string;
 };
 
-export const columns: ColumnDef<Rooms>[] = [
+export const getColumns = (
+  handleEdit: (room: Rooms) => void
+): ColumnDef<Rooms>[] => [
   {
-    accessorKey: 'name',
-    header: 'Name'
+    accessorKey: "name",
+    header: "Name",
   },
   {
-    accessorKey: 'capacity',
-    header: 'Capacity'
+    accessorKey: "capacity",
+    header: "Capacity",
   },
   {
-    accessorKey: 'slot_1',
-    header: 'Slot 1'
+    accessorKey: "slot_1",
+    header: "Slot 1",
   },
   {
-    accessorKey: 'slot_2',
-    header: 'Slot 2'
+    accessorKey: "slot_2",
+    header: "Slot 2",
   },
   {
-    accessorKey: 'image',
-    header: 'Image',
+    accessorKey: "image",
+    header: "Image",
     cell: ({ row }) => {
       const imageUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/public/room-images/${row.original.image}`;
       return <ImageCell imageUrl={imageUrl} />;
-    }
-  }
+    },
+  },
+  {
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => (
+      <button
+        className="text-blue-500 hover:underline"
+        onClick={() => handleEdit(row.original)}
+      >
+        Edit
+      </button>
+    ),
+  },
 ];

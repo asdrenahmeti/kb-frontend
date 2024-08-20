@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
   SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -16,37 +16,37 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   QueryClient,
   QueryClientProvider,
   useQueryClient,
   useQuery,
-  useMutation
-} from '@tanstack/react-query';
-import axios from 'axios';
-import { Rooms, columns } from './columns';
-import { DataTable } from './data-table';
-import { Button } from '@/components/ui/button';
-import { useForm, Controller } from 'react-hook-form';
-import { toast } from 'sonner';
-import { DateTime } from 'luxon';
+  useMutation,
+} from "@tanstack/react-query";
+import axios from "axios";
+import { Rooms, getColumns } from "./columns";
+import { DataTable } from "./data-table";
+import { Button } from "@/components/ui/button";
+import { useForm, Controller } from "react-hook-form";
+import { toast } from "sonner";
+import { DateTime } from "luxon";
+import { EditDialog } from "./EditDialog";
 
-type Props = {};
-
-const Page = (props: Props) => {
-  const [selectedSite, setSelectedSite] = useState('');
+const Page = () => {
+  const [selectedSite, setSelectedSite] = useState("");
   const [roomModal, setRoomModal] = useState(false);
+  const [editRoom, setEditRoom] = useState<Rooms | null>(null);
   const [fromOptions, setFromOptions] = useState<string[]>([]);
   const [toOptions, setToOptions] = useState<string[]>([]);
-  const [selectedFrom, setSelectedFrom] = useState('');
-  const [selectedTo, setSelectedTo] = useState('');
+  const [selectedFrom, setSelectedFrom] = useState("");
+  const [selectedTo, setSelectedTo] = useState("");
   const [fromOptions2, setFromOptions2] = useState<string[]>([]);
   const [toOptions2, setToOptions2] = useState<string[]>([]);
-  const [selectedFrom2, setSelectedFrom2] = useState('');
+  const [selectedFrom2, setSelectedFrom2] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const {
@@ -54,51 +54,61 @@ const Page = (props: Props) => {
     register,
     handleSubmit,
     reset,
-    formState: { errors }
+    setValue,
+    watch,
+    formState: { errors },
   } = useForm();
 
   const queryClient = useQueryClient();
 
+  const handleEdit = (room: Rooms) => {
+    setEditRoom(room);
+  };
+
+  const handleCloseEditDialog = () => {
+    setEditRoom(null);
+  };
+
   const generateHourOptions = (opening: string, closing: string) => {
-    const openingHour = DateTime.fromFormat(opening, 'HH:mm').hour;
-    const closingHour = DateTime.fromFormat(closing, 'HH:mm').hour;
+    const openingHour = DateTime.fromFormat(opening, "HH:mm").hour;
+    const closingHour = DateTime.fromFormat(closing, "HH:mm").hour;
     let hours = [];
 
     if (closingHour < openingHour) {
       for (let i = openingHour; i < 24; i++) {
-        hours.push(DateTime.fromObject({ hour: i }).toFormat('HH:mm'));
+        hours.push(DateTime.fromObject({ hour: i }).toFormat("HH:mm"));
       }
       for (let i = 0; i <= closingHour; i++) {
-        hours.push(DateTime.fromObject({ hour: i }).toFormat('HH:mm'));
+        hours.push(DateTime.fromObject({ hour: i }).toFormat("HH:mm"));
       }
     } else {
       for (let i = openingHour; i <= closingHour; i++) {
-        hours.push(DateTime.fromObject({ hour: i }).toFormat('HH:mm'));
+        hours.push(DateTime.fromObject({ hour: i }).toFormat("HH:mm"));
       }
     }
     return hours;
   };
 
   const mutation = useMutation({
-    onSuccess: data => {
-      queryClient.invalidateQueries({ queryKey: ['sites', 'rooms'] });
-      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["sites", "rooms"] });
+      queryClient.invalidateQueries({ queryKey: ["rooms"] });
       reset();
       setRoomModal(false);
       toast.success(`Successfully added a new room`, {
-        position: 'top-center'
+        position: "top-center",
       });
     },
-    onError: error => {
+    onError: (error) => {
       toast.error(`Error while creating the room`, {
-        position: 'top-center'
+        position: "top-center",
       });
     },
     mutationFn: (formData: any) => {
       const data = new FormData();
       for (const key in formData) {
         if (formData[key] !== undefined) {
-          if (key === 'openingHours') {
+          if (key === "openingHours") {
             data.append(key, JSON.stringify(formData[key]));
           } else {
             data.append(key, formData[key]);
@@ -106,14 +116,14 @@ const Page = (props: Props) => {
         }
       }
       if (selectedFile) {
-        data.append('file', selectedFile);
+        data.append("file", selectedFile);
       }
       return axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/rooms`, data, {
         headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+          "Content-Type": "multipart/form-data",
+        },
       });
-    }
+    },
   });
 
   const onSubmit = async (formData: any) => {
@@ -121,41 +131,41 @@ const Page = (props: Props) => {
       {
         startTime: formData.opening_hour_1,
         endTime: formData.closing_hour_1,
-        pricing: Number(formData.pricing_1)
+        pricing: Number(formData.pricing_1),
       },
       formData.opening_hour_2
         ? {
             startTime: formData.opening_hour_2,
             endTime: formData.closing_hour_2,
-            pricing: Number(formData.pricing_2)
+            pricing: Number(formData.pricing_2),
           }
-        : null
+        : null,
     ].filter(Boolean);
 
     mutation.mutate({
       name: formData.name,
       openingHours,
       capacity: Number(formData.capacity),
-      siteId: selectedSite
+      siteId: selectedSite,
     });
   };
 
   const { data: sites = [] } = useQuery({
-    queryKey: ['sites'],
+    queryKey: ["sites"],
     queryFn: () =>
       axios
         .get(`${process.env.NEXT_PUBLIC_BASE_URL}/sites`)
-        .then(res => res.data)
+        .then((res) => res.data),
   });
 
   const { data: dataRoom = [] } = useQuery({
-    queryKey: ['rooms', selectedSite],
+    queryKey: ["rooms", selectedSite],
     queryFn: () =>
       axios
         .get(`${process.env.NEXT_PUBLIC_BASE_URL}/sites/${selectedSite}/rooms`)
-        .then(res => res.data),
+        .then((res) => res.data),
     refetchOnWindowFocus: true,
-    enabled: !!selectedSite
+    enabled: !!selectedSite,
   });
 
   useEffect(() => {
@@ -172,19 +182,21 @@ const Page = (props: Props) => {
     if (selectedFrom) {
       const site = sites.find((site: any) => site.id === selectedSite);
       if (site) {
-        const selectedHour = DateTime.fromFormat(selectedFrom, 'HH:mm').hour;
+        const selectedHour = DateTime.fromFormat(selectedFrom, "HH:mm").hour;
         const closingHour = DateTime.fromFormat(
           site.closingHours,
-          'HH:mm'
+          "HH:mm"
         ).hour;
         const hours = Array.from(
           {
             length:
-              closingHour - selectedHour + (closingHour < selectedHour ? 24 : 0)
+              closingHour -
+              selectedHour +
+              (closingHour < selectedHour ? 24 : 0),
           },
           (_, i) =>
             DateTime.fromObject({ hour: (selectedHour + i + 1) % 24 }).toFormat(
-              'HH:mm'
+              "HH:mm"
             )
         );
         setToOptions(hours);
@@ -196,19 +208,21 @@ const Page = (props: Props) => {
     if (selectedTo) {
       const site = sites.find((site: any) => site.id === selectedSite);
       if (site) {
-        const selectedHour = DateTime.fromFormat(selectedTo, 'HH:mm').hour;
+        const selectedHour = DateTime.fromFormat(selectedTo, "HH:mm").hour;
         const closingHour = DateTime.fromFormat(
           site.closingHours,
-          'HH:mm'
+          "HH:mm"
         ).hour;
         const hours = Array.from(
           {
             length:
-              closingHour - selectedHour + (closingHour < selectedHour ? 24 : 0)
+              closingHour -
+              selectedHour +
+              (closingHour < selectedHour ? 24 : 0),
           },
           (_, i) =>
             DateTime.fromObject({ hour: (selectedHour + i + 1) % 24 }).toFormat(
-              'HH:mm'
+              "HH:mm"
             )
         );
         setFromOptions2([hours[0]]);
@@ -220,19 +234,21 @@ const Page = (props: Props) => {
     if (selectedFrom2) {
       const site = sites.find((site: any) => site.id === selectedSite);
       if (site) {
-        const selectedHour = DateTime.fromFormat(selectedFrom2, 'HH:mm').hour;
+        const selectedHour = DateTime.fromFormat(selectedFrom2, "HH:mm").hour;
         const closingHour = DateTime.fromFormat(
           site.closingHours,
-          'HH:mm'
+          "HH:mm"
         ).hour;
         const hours = Array.from(
           {
             length:
-              closingHour - selectedHour + (closingHour < selectedHour ? 24 : 0)
+              closingHour -
+              selectedHour +
+              (closingHour < selectedHour ? 24 : 0),
           },
           (_, i) =>
             DateTime.fromObject({ hour: (selectedHour + i + 1) % 24 }).toFormat(
-              'HH:mm'
+              "HH:mm"
             )
         );
         setToOptions2(hours);
@@ -242,26 +258,24 @@ const Page = (props: Props) => {
 
   const filtered = dataRoom?.rooms?.map((item: any) => {
     return {
-      name: item.name,
-      capacity: item.capacity,
+      ...item,
       slot_1: item.slots?.[0]
         ? `${item.slots[0].startTime} - ${item.slots[0].endTime} | ${item.slots[0].pricing}£`
-        : 'not defined',
+        : "not defined",
       slot_2: item.slots?.[1]
         ? `${item.slots[1].startTime} - ${item.slots[1].endTime} | ${item.slots[1].pricing}£`
-        : 'not defined',
-      image: item.image
+        : "not defined",
     };
   });
 
   return (
     <div>
-      <h1 className='text-2xl font-medium mb-4'>Manage Rooms</h1>
+      <h1 className="text-2xl font-medium mb-4">Manage Rooms</h1>
 
-      <div className='flex justify-between items-center'>
-        <Select onValueChange={item => setSelectedSite(item)}>
-          <SelectTrigger className='w-[180px]'>
-            <SelectValue placeholder='Select a site' />
+      <div className="flex justify-between items-center">
+        <Select onValueChange={(item) => setSelectedSite(item)}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select a site" />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
@@ -282,27 +296,27 @@ const Page = (props: Props) => {
         >
           <DialogTrigger asChild>
             <Button
-              className='bg-kb-primary hover:bg-kb-secondary'
-              disabled={selectedSite == ''}
+              className="bg-kb-primary hover:bg-kb-secondary"
+              disabled={selectedSite == ""}
             >
-              Add a room{' '}
+              Add a room{" "}
               <svg
-                xmlns='http://www.w3.org/2000/svg'
-                fill='#FFFFFF'
-                viewBox='0 0 24 24'
-                strokeWidth='2'
-                stroke='currentColor'
-                className='ml-2 w-6 h-6 text-white cursor-pointer'
+                xmlns="http://www.w3.org/2000/svg"
+                fill="#FFFFFF"
+                viewBox="0 0 24 24"
+                strokeWidth="2"
+                stroke="currentColor"
+                className="ml-2 w-6 h-6 text-white cursor-pointer"
               >
                 <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  d='M12 4.5v15m7.5-7.5h-15'
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 4.5v15m7.5-7.5h-15"
                 />
               </svg>
             </Button>
           </DialogTrigger>
-          <DialogContent className='sm:max-w-[425px]'>
+          <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Add a new room</DialogTitle>
               <DialogDescription>
@@ -310,54 +324,54 @@ const Page = (props: Props) => {
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit(onSubmit)}>
-              <div className='grid gap-4 py-4'>
-                <div className='grid grid-cols-4 items-center gap-4'>
-                  <Label htmlFor='name' className='text-right'>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="name" className="text-right">
                     Name
                   </Label>
                   <Input
-                    {...register('name', { required: true })}
-                    id='name'
-                    placeholder='Write a room name'
-                    className='col-span-3'
+                    {...register("name", { required: true })}
+                    id="name"
+                    placeholder="Write a room name"
+                    className="col-span-3"
                   />
                   {errors.name && (
-                    <span className='text-red-500 -mt-2 text-xs col-start-2 col-end-4'>
+                    <span className="text-red-500 -mt-2 text-xs col-start-2 col-end-4">
                       Name is required
                     </span>
                   )}
                 </div>
-                <div className='grid grid-cols-4 items-center gap-4'>
-                  <Label htmlFor='image' className='text-right'>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="image" className="text-right">
                     Image
                   </Label>
                   <Input
-                    id='image'
-                    type='file'
-                    className='col-span-3'
-                    onChange={e =>
+                    id="image"
+                    type="file"
+                    className="col-span-3"
+                    onChange={(e) =>
                       setSelectedFile(e.target.files ? e.target.files[0] : null)
                     }
                   />
                 </div>
-                <div className='grid grid-cols-4 items-center gap-4'>
-                  <Label htmlFor='opening_hour_1' className='text-right'>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="opening_hour_1" className="text-right">
                     Pricing 1
                   </Label>
-                  <div className='flex flex-col col-span-3 gap-2'>
-                    <div className='w-full flex gap-2'>
+                  <div className="flex flex-col col-span-3 gap-2">
+                    <div className="w-full flex gap-2">
                       <Controller
-                        name='opening_hour_1'
+                        name="opening_hour_1"
                         control={control}
                         render={({ field }) => (
                           <Select
-                            onValueChange={value => {
+                            onValueChange={(value) => {
                               field.onChange(value);
                               setSelectedFrom(value);
                             }}
                           >
-                            <SelectTrigger className='col-span-3'>
-                              <SelectValue placeholder='From' />
+                            <SelectTrigger className="col-span-3">
+                              <SelectValue placeholder="From" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectGroup>
@@ -372,17 +386,17 @@ const Page = (props: Props) => {
                         )}
                       />
                       <Controller
-                        name='closing_hour_1'
+                        name="closing_hour_1"
                         control={control}
                         render={({ field }) => (
                           <Select
-                            onValueChange={value => {
+                            onValueChange={(value) => {
                               field.onChange(value);
                               setSelectedTo(value);
                             }}
                           >
-                            <SelectTrigger className='col-span-3'>
-                              <SelectValue placeholder='To' />
+                            <SelectTrigger className="col-span-3">
+                              <SelectValue placeholder="To" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectGroup>
@@ -398,32 +412,32 @@ const Page = (props: Props) => {
                       />
                     </div>
                     <Input
-                      {...register('pricing_1', { required: true })}
-                      id='pricing_1'
-                      placeholder='Pricing'
-                      className='col-span-3'
-                      type='number'
+                      {...register("pricing_1", { required: true })}
+                      id="pricing_1"
+                      placeholder="Pricing"
+                      className="col-span-3"
+                      type="number"
                     />
                   </div>
                 </div>
-                <div className='grid grid-cols-4 items-center gap-4'>
-                  <Label htmlFor='opening_hour_2' className='text-right'>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="opening_hour_2" className="text-right">
                     Pricing 2
                   </Label>
-                  <div className='flex flex-col col-span-3 gap-2'>
-                    <div className='w-full flex gap-2'>
+                  <div className="flex flex-col col-span-3 gap-2">
+                    <div className="w-full flex gap-2">
                       <Controller
-                        name='opening_hour_2'
+                        name="opening_hour_2"
                         control={control}
                         render={({ field }) => (
                           <Select
-                            onValueChange={value => {
+                            onValueChange={(value) => {
                               field.onChange(value);
                               setSelectedFrom2(value);
                             }}
                           >
-                            <SelectTrigger className='col-span-3'>
-                              <SelectValue placeholder='From' />
+                            <SelectTrigger className="col-span-3">
+                              <SelectValue placeholder="From" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectGroup>
@@ -438,12 +452,12 @@ const Page = (props: Props) => {
                         )}
                       />
                       <Controller
-                        name='closing_hour_2'
+                        name="closing_hour_2"
                         control={control}
                         render={({ field }) => (
                           <Select onValueChange={field.onChange}>
-                            <SelectTrigger className='col-span-3'>
-                              <SelectValue placeholder='To' />
+                            <SelectTrigger className="col-span-3">
+                              <SelectValue placeholder="To" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectGroup>
@@ -459,64 +473,76 @@ const Page = (props: Props) => {
                       />
                     </div>
                     <Input
-                      {...register('pricing_2', { required: false })}
-                      id='pricing_2'
-                      placeholder='Pricing'
-                      className='col-span-3'
-                      type='number'
+                      {...register("pricing_2", { required: false })}
+                      id="pricing_2"
+                      placeholder="Pricing"
+                      className="col-span-3"
+                      type="number"
                     />
                   </div>
                 </div>
-                <div className='grid grid-cols-4 items-center gap-4'>
-                  <Label htmlFor='Capacity' className='text-right'>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="Capacity" className="text-right">
                     Capacity
                   </Label>
                   <Input
-                    {...register('capacity', { required: true })}
-                    id='capacity'
-                    placeholder='Room capacity'
-                    className='col-span-3'
-                    type='number'
+                    {...register("capacity", { required: true })}
+                    id="capacity"
+                    placeholder="Room capacity"
+                    className="col-span-3"
+                    type="number"
                   />
                   {errors.capacity && (
-                    <span className='text-red-500 -mt-2 text-xs col-start-2 col-end-4'>
+                    <span className="text-red-500 -mt-2 text-xs col-start-2 col-end-4">
                       Capacity is required
                     </span>
                   )}
                 </div>
               </div>
               <DialogFooter>
-                <Button type='submit'>Save</Button>
+                <Button type="submit">Save</Button>
               </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>
       </div>
       {selectedSite && (
-        <div className='px-4 py-2 border-[1.1px] border-black/10 shadow-sm mt-4 rounded-md'>
-          <h1 className='text-md font-medium mb-2'>
+        <div className="px-4 py-2 border-[1.1px] border-black/10 shadow-sm mt-4 rounded-md">
+          <h1 className="text-md font-medium mb-2">
             Selected site information:
           </h1>
 
-          <div className='flex gap-1'>
-            <p className='font-medium text-sm'>Name:</p>
-            <p className='text-sm'>{dataRoom?.name}</p>
+          <div className="flex gap-1">
+            <p className="font-medium text-sm">Name:</p>
+            <p className="text-sm">{dataRoom?.name}</p>
           </div>
-          <div className='flex gap-1'>
-            <p className='font-medium text-sm'>Opens:</p>
-            <p className='text-sm'>{dataRoom?.openingHours}</p>
+          <div className="flex gap-1">
+            <p className="font-medium text-sm">Opens:</p>
+            <p className="text-sm">{dataRoom?.openingHours}</p>
           </div>
-          <div className='flex gap-1'>
-            <p className='font-medium text-sm'>Closes:</p>
-            <p className='text-sm'>{dataRoom?.closingHours}</p>
+          <div className="flex gap-1">
+            <p className="font-medium text-sm">Closes:</p>
+            <p className="text-sm">{dataRoom?.closingHours}</p>
           </div>
         </div>
       )}
 
-      {selectedSite !== '' && (
-        <div className='mt-8'>
-          <DataTable columns={columns} data={filtered || []} />
+      {selectedSite !== "" && (
+        <div className="mt-8">
+          <DataTable columns={getColumns(handleEdit)} data={filtered || []} />
         </div>
+      )}
+      {editRoom && (
+        <EditDialog
+          room={editRoom}
+          onClose={handleCloseEditDialog}
+          onSuccess={() => {
+            queryClient.invalidateQueries({
+              queryKey: ["rooms", selectedSite],
+            });
+            handleCloseEditDialog();
+          }}
+        />
       )}
     </div>
   );
