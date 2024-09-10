@@ -196,7 +196,7 @@ const BookingGrid: React.FC<BookingGridProps> = ({
             >
               {room.name}
             </div>
-            <div className="col-start-2 grid grid-flow-col auto-cols-min relative">
+            <div className="left-[120px] col-start-2 grid grid-flow-col auto-cols-min relative">
               {Array.from(
                 {
                   length: calculateNumberOfFiveMinuteIntervals(
