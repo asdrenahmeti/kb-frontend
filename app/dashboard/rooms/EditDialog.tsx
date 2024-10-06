@@ -101,7 +101,6 @@ export const EditDialog: React.FC<EditDialogProps> = ({
       });
     },
     mutationFn: (formData: any) => {
-      console.log("Form Data to be sent:", formData); // Debugging line
       return axios.patch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/rooms/${room.id}`,
         formData,
@@ -115,7 +114,6 @@ export const EditDialog: React.FC<EditDialogProps> = ({
   });
 
   const onSubmit = async (formData: any) => {
-    console.log("Form Data:", formData); // Debugging line
 
     const openingHours = [
       {

@@ -215,7 +215,7 @@ const BookingGrid: React.FC<BookingGridProps> = ({
                   const isDisabled = roomBookings.some((booking: any) => {
                     const bookingStart = DateTime.fromISO(booking.startTime, {
                       zone: "utc",
-                    }).minus({ minutes: 5 });
+                    })
                     const bookingEnd = DateTime.fromISO(booking.endTime, {
                       zone: "utc",
                     }).plus({ minutes: 5 });

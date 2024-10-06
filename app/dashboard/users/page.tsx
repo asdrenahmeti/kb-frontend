@@ -58,7 +58,6 @@ const Page = () => {
 
   const mutation = useMutation({
     onSuccess: data => {
-      console.log('User added successfully:', data);
       queryClient.invalidateQueries({ queryKey: ['users'] });
       reset();
       setUserModal(false);
@@ -73,7 +72,6 @@ const Page = () => {
       });
     },
     mutationFn: (formData: any) => {
-      console.log('Submitting form data:', formData);
       return axios.post(
         `${process.env.NEXT_PUBLIC_BASE_URL}/users/create-account`,
         formData
@@ -82,7 +80,6 @@ const Page = () => {
   });
 
   const onSubmit = (formData: any) => {
-    console.log('THIS IS FORM DATA', formData);
     mutation.mutate(formData);
   };
 

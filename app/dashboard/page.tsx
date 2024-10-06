@@ -9,6 +9,7 @@ import { useEffect } from 'react';
 declare module 'next-auth' {
   interface Session {
     user: {
+      id: any;
       name?: string;
       email?: string;
       image?: string;
@@ -20,6 +21,8 @@ declare module 'next-auth' {
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+
+  console.log("SESSION FROM DASHBOARD:",session)
 
   useEffect(() => {
     if (status === 'unauthenticated') {

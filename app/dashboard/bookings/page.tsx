@@ -1,34 +1,35 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { DateTime } from 'luxon';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import { DateTime } from "luxon";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
   SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
-import { Calendar } from '@/components/ui/calendar';
+  SelectValue,
+} from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
-} from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { CalendarIcon, PanelBottomOpen, PanelTopOpen } from 'lucide-react';
-import { format } from 'date-fns';
-import CurrentTimeLine from './CurrentTimeLine';
-import BookingGrid from './BookingGrid';
-import AddBooking from './AddBooking';
-import DragConfirmModal from './DragConfirmModal';
-import ChangeBookingModal from './ChangeBookingModal';
-import { toast } from 'sonner';
-import DeleteBookingModal from './DeleteBookingModal';
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { CalendarIcon, PanelBottomOpen, PanelTopOpen } from "lucide-react";
+import { format } from "date-fns";
+import CurrentTimeLine from "./CurrentTimeLine";
+import BookingGrid from "./BookingGrid";
+import AddBooking from "./AddBooking";
+import DragConfirmModal from "./DragConfirmModal";
+import ChangeBookingModal from "./ChangeBookingModal";
+import { toast } from "sonner";
+import DeleteBookingModal from "./DeleteBookingModal";
+import NotesModal from "./NotesModal";
 
 interface BookingData {
   id: string;
@@ -54,10 +55,10 @@ const calculateScrollPosition = (
   startHour: string,
   currentTime: DateTime
 ): number => {
-  const startTime = DateTime.fromFormat(startHour, 'HH:mm');
+  const startTime = DateTime.fromFormat(startHour, "HH:mm");
   const targetTime = currentTime.minus({ hours: 1 });
 
-  const diffInMinutes = targetTime.diff(startTime, 'minutes').minutes;
+  const diffInMinutes = targetTime.diff(startTime, "minutes").minutes;
   const scrollPosition = (diffInMinutes / 5) * 30;
 
   return scrollPosition;
@@ -66,8 +67,8 @@ const calculateScrollPosition = (
 const Page: React.FC = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [selectedSite, setSelectedSite] = useState<string | null>(null);
-  const [startHour, setStartHour] = useState<string>('');
-  const [endHour, setEndHour] = useState<string>('');
+  const [startHour, setStartHour] = useState<string>("");
+  const [endHour, setEndHour] = useState<string>("");
   const [bookingModal, setBookingModal] = useState<boolean>(false);
   const [newBooking, setNewBooking] = useState<NewBookingData | null>(null);
   const [activeBooking, setActiveBooking] = useState<any>(null);
@@ -81,25 +82,26 @@ const Page: React.FC = () => {
     useState<boolean>(false);
   const [showDeleteBookingModal, setShowDeleteBookingModal] =
     useState<boolean>(false);
+  const [showNotesModal, setShowNotesModal] = useState<boolean>(false);
 
-  const currentDate = date ? DateTime.fromJSDate(date).toISODate() : '';
+  const currentDate = date ? DateTime.fromJSDate(date).toISODate() : "";
 
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    onSuccess: res => {
-      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
     },
-    onError: error => {
+    onError: (error) => {
       if (axios.isAxiosError(error) && error.response) {
         toast.error(
           `${(error?.response?.data as { message?: string })?.message}`,
           {
-            position: 'top-center'
+            position: "top-center",
           }
         );
       } else {
-        console.error('An error occurred:', error.message);
+        console.error("An error occurred:", error.message);
       }
     },
     mutationFn: ({ id, ...booking }: BookingData) => {
@@ -107,7 +109,7 @@ const Page: React.FC = () => {
         `${process.env.NEXT_PUBLIC_BASE_URL}/bookings/${id}`,
         booking
       );
-    }
+    },
   });
 
   const handleConfirmDrag = (newBooking: BookingData) => {
@@ -117,10 +119,10 @@ const Page: React.FC = () => {
 
     const { id, date, startTime, endTime, roomId, ...rest } = newBooking;
 
-    const [startHour, startMinute] = startTime.split(':');
-    const [endHour, endMinute] = endTime.split(':');
+    const [startHour, startMinute] = startTime.split(":");
+    const [endHour, endMinute] = endTime.split(":");
 
-    const bookingDate = DateTime.fromISO(date, { zone: 'utc' });
+    const bookingDate = DateTime.fromISO(date, { zone: "utc" });
 
     const formattedStartTime =
       DateTime.fromObject(
@@ -129,24 +131,24 @@ const Page: React.FC = () => {
           month: bookingDate.month,
           day: bookingDate.day,
           hour: parseInt(startHour),
-          minute: parseInt(startMinute)
+          minute: parseInt(startMinute),
         },
-        { zone: 'utc' }
-      ).toISO({ includeOffset: false }) + 'Z';
+        { zone: "utc" }
+      ).toISO({ includeOffset: false }) + "Z";
 
     // Calculate the end time based on the start time and duration
-    let startDateTime = DateTime.fromISO(formattedStartTime, { zone: 'utc' });
+    let startDateTime = DateTime.fromISO(formattedStartTime, { zone: "utc" });
     let endDateTime = startDateTime.plus({
       hours: parseInt(endHour) - parseInt(startHour),
-      minutes: parseInt(endMinute) - parseInt(startMinute)
+      minutes: parseInt(endMinute) - parseInt(startMinute),
     });
 
     // Adjust the date if the new start time is before the opening hour or after the closing hour
-    const siteStartDateTime = DateTime.fromFormat(startHour, 'HH:mm', {
-      zone: 'utc'
+    const siteStartDateTime = DateTime.fromFormat(startHour, "HH:mm", {
+      zone: "utc",
     });
-    const siteEndDateTime = DateTime.fromFormat(endHour, 'HH:mm', {
-      zone: 'utc'
+    const siteEndDateTime = DateTime.fromFormat(endHour, "HH:mm", {
+      zone: "utc",
     });
 
     if (startDateTime < siteStartDateTime) {
@@ -162,11 +164,11 @@ const Page: React.FC = () => {
 
     const formattedBooking: BookingData = {
       id,
-      startTime: startDateTime.toISO({ includeOffset: false }) + 'Z',
-      endTime: endDateTime.toISO({ includeOffset: false }) + 'Z',
-      date: startDateTime.toISODate() + 'T00:00:00.000Z', // Ensure the date is in ISO-8601 format with 'Z'
+      startTime: startDateTime.toISO({ includeOffset: false }) + "Z",
+      endTime: endDateTime.toISO({ includeOffset: false }) + "Z",
+      date: startDateTime.toISODate() + "T00:00:00.000Z", // Ensure the date is in ISO-8601 format with 'Z'
       roomId, // Ensure the new roomId is included
-      ...rest
+      ...rest,
     };
 
     mutation.mutate(formattedBooking);
@@ -191,8 +193,8 @@ const Page: React.FC = () => {
         day: date.getDate(),
         hour: 0,
         minute: 0,
-        second: 0
-      }).toISO({ includeOffset: false }) + 'Z';
+        second: 0,
+      }).toISO({ includeOffset: false }) + "Z";
 
     try {
       const res = await axios.get(
@@ -203,31 +205,31 @@ const Page: React.FC = () => {
       setEndHour(data?.closingHours);
       return data;
     } catch (error) {
-      console.error('Error fetching bookings data:', error);
+      console.error("Error fetching bookings data:", error);
       return null;
     }
   };
 
   const { data, isFetching } = useQuery({
-    queryKey: ['bookings', date, selectedSite],
+    queryKey: ["bookings", date, selectedSite],
     queryFn: fetchData,
-    enabled: !!selectedSite && !!date
+    enabled: !!selectedSite && !!date,
   });
 
   const { data: sitesData } = useQuery({
-    queryKey: ['sites'],
+    queryKey: ["sites"],
     queryFn: () =>
       axios
         .get(`${process.env.NEXT_PUBLIC_BASE_URL}/sites`)
-        .then(res => res.data)
+        .then((res) => res.data),
   });
 
   const handleBoxClick = (time: string, roomId: string, roomName: string) => {
-    const selectedDateTime = DateTime.fromFormat(time, 'HH:mm', {
-      zone: 'utc'
+    const selectedDateTime = DateTime.fromFormat(time, "HH:mm", {
+      zone: "utc",
     });
-    const startDateTime = DateTime.fromFormat(startHour, 'HH:mm', {
-      zone: 'utc'
+    const startDateTime = DateTime.fromFormat(startHour, "HH:mm", {
+      zone: "utc",
     });
 
     // Adjust the date if the selected time is before the start hour
@@ -240,9 +242,9 @@ const Page: React.FC = () => {
 
     const newBooking = {
       date: selectedDate,
-      startTime: selectedDateTime.toFormat('HH:mm'),
+      startTime: selectedDateTime.toFormat("HH:mm"),
       roomId: roomId,
-      roomName: roomName
+      roomName: roomName,
     };
 
     setNewBooking(newBooking);
@@ -257,16 +259,16 @@ const Page: React.FC = () => {
     const timeIntervalInMinutes = 5;
     const boxWidth = 30;
 
-    const startDateTime = DateTime.fromFormat(startHour, 'HH:mm', {
-      zone: 'utc'
+    const startDateTime = DateTime.fromFormat(startHour, "HH:mm", {
+      zone: "utc",
     });
     const bookingStartDateTime = DateTime.fromISO(bookingStartTime, {
-      zone: 'utc'
+      zone: "utc",
     });
 
     const initialMinutesFromStart = bookingStartDateTime.diff(
       startDateTime,
-      'minutes'
+      "minutes"
     ).minutes;
     const initialLeft =
       (initialMinutesFromStart / timeIntervalInMinutes) * boxWidth;
@@ -278,14 +280,14 @@ const Page: React.FC = () => {
       (relativePositionX / boxWidth) * timeIntervalInMinutes;
 
     const momentaryTime = startDateTime.plus({
-      minutes: totalMinutesFromStart
+      minutes: totalMinutesFromStart,
     });
 
     // Determine the new date based on the new time
     let newStartTime = momentaryTime.set({
       year: bookingStartDateTime.year,
       month: bookingStartDateTime.month,
-      day: bookingStartDateTime.day
+      day: bookingStartDateTime.day,
     });
 
     // If the new start time is before the start hour, it should be on the next day
@@ -294,8 +296,8 @@ const Page: React.FC = () => {
     }
 
     // Adjust the date if the new start time is after the end hour
-    const endDateTime = DateTime.fromFormat(endHour, 'HH:mm', {
-      zone: 'utc'
+    const endDateTime = DateTime.fromFormat(endHour, "HH:mm", {
+      zone: "utc",
     });
     if (newStartTime >= endDateTime && endDateTime < startDateTime) {
       newStartTime = newStartTime.plus({ days: 1 });
@@ -304,17 +306,17 @@ const Page: React.FC = () => {
     const newBooking = {
       date: newStartTime.toISODate(),
       startTime: newStartTime.toISO(),
-      roomId: roomId
+      roomId: roomId,
     };
 
     setDraggedBooking({
       old: {
-        id: '',
+        id: "",
         startTime: bookingStartTime,
-        endTime: '',
-        date: bookingStartDateTime.toISODate()
+        endTime: "",
+        date: bookingStartDateTime.toISODate(),
       },
-      new: newBooking
+      new: newBooking,
     });
     setShowDragConfirmModal(true);
 
@@ -322,14 +324,14 @@ const Page: React.FC = () => {
   };
 
   useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ['bookings'] });
+    queryClient.invalidateQueries({ queryKey: ["bookings"] });
   }, [date, selectedSite]);
 
   useEffect(() => {
     if (startHour && endHour) {
       const currentTime = DateTime.local();
       const scrollPosition = calculateScrollPosition(startHour, currentTime);
-      const container = document.querySelector('.w-full.overflow-auto');
+      const container = document.querySelector(".w-full.overflow-auto");
       if (container) {
         container.scrollLeft = scrollPosition;
       }
@@ -344,12 +346,12 @@ const Page: React.FC = () => {
 
   return (
     <>
-      <div className='relative h-full'>
-        <h1 className='text-2xl font-medium mb-4'>Bookings</h1>
-        <div className='flex gap-4 mb-4'>
-          <Select onValueChange={item => setSelectedSite(item)}>
-            <SelectTrigger className='w-[180px]'>
-              <SelectValue placeholder='Select a site' />
+      <div className="relative h-full">
+        <h1 className="text-2xl font-medium mb-4">Bookings</h1>
+        <div className="flex gap-4 mb-4">
+          <Select onValueChange={(item) => setSelectedSite(item)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select a site" />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
@@ -365,19 +367,19 @@ const Page: React.FC = () => {
           <Popover>
             <PopoverTrigger asChild>
               <Button
-                variant={'outline'}
+                variant={"outline"}
                 className={cn(
-                  'w-[280px] justify-start text-left font-normal',
-                  !date && 'text-muted-foreground'
+                  "w-[280px] justify-start text-left font-normal",
+                  !date && "text-muted-foreground"
                 )}
               >
-                <CalendarIcon className='mr-2 h-4 w-4' />
-                {date ? format(date, 'PPP') : <span>Pick a date</span>}
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {date ? format(date, "PPP") : <span>Pick a date</span>}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className='w-auto p-0'>
+            <PopoverContent className="w-auto p-0">
               <Calendar
-                mode='single'
+                mode="single"
                 selected={date}
                 onSelect={setDate}
                 initialFocus
@@ -386,7 +388,7 @@ const Page: React.FC = () => {
           </Popover>
         </div>
 
-        <div className='w-full overflow-auto relative'>
+        <div className="w-full overflow-auto relative">
           {selectedSite && (
             <>
               <CurrentTimeLine startHour={startHour} />
@@ -409,89 +411,89 @@ const Page: React.FC = () => {
 
         <div
           className={`w-full shadow-xl border-[1px] bg-kb-primary/20 border-black/10 absolute bottom-0 overflow-hidden rounded-tl-xl rounded-tr-xl transition-height duration-300 ${
-            isCollapsed ? 'h-[38px]' : 'h-[240px]'
+            isCollapsed ? "h-[38px]" : "h-[240px]"
           }`}
         >
-          <div className='flex justify-between items-center bg-kb-primary px-4 py-2 text-white'>
-            <p className='font-medium'>
+          <div className="flex justify-between items-center bg-kb-primary px-4 py-2 text-white">
+            <p className="font-medium">
               {activeBooking
                 ? `Active Selected Booking - ${activeBooking?.booking?.id}`
-                : 'No Active Booking'}
+                : "No Active Booking"}
             </p>
-            <div className='flex gap-2'>
+            <div className="flex gap-2">
               <button
                 onClick={() => setIsCollapsed(!isCollapsed)}
-                className='text-blue-500'
+                className="text-blue-500"
               >
                 {isCollapsed ? (
-                  <PanelBottomOpen color='white' />
+                  <PanelBottomOpen color="white" />
                 ) : (
-                  <PanelTopOpen color='white' />
+                  <PanelTopOpen color="white" />
                 )}
               </button>
             </div>
           </div>
           {!isCollapsed && activeBooking && (
-            <div className='grid grid-cols-3 gap-4 p-4'>
-              <div className='col-span-1'>
-                <div className='flex flex-col '>
-                  <div className='flex'>
-                    <p className='font-medium min-w-[100px]'>User:</p>
-                    <p className='font-light'>
-                      {activeBooking?.booking?.user?.firstName || 'not defined'}{' '}
-                      {activeBooking?.booking?.user?.lastName || 'not defined'}
+            <div className="grid grid-cols-3 gap-4 p-4">
+              <div className="col-span-1">
+                <div className="flex flex-col ">
+                  <div className="flex">
+                    <p className="font-medium min-w-[100px]">User:</p>
+                    <p className="font-light">
+                      {activeBooking?.booking?.user?.firstName || "not defined"}{" "}
+                      {activeBooking?.booking?.user?.lastName || "not defined"}
                     </p>
                   </div>
-                  <div className='flex'>
-                    <p className='font-medium min-w-[100px]'>Email:</p>
-                    <p className='font-light'>
-                      {activeBooking?.booking?.user?.email || 'not defined'}
+                  <div className="flex">
+                    <p className="font-medium min-w-[100px]">Email:</p>
+                    <p className="font-light">
+                      {activeBooking?.booking?.user?.email || "not defined"}
                     </p>
                   </div>
-                  <div className='flex'>
-                    <p className='font-medium min-w-[100px]'>Phone:</p>
-                    <p className='font-light'>
+                  <div className="flex">
+                    <p className="font-medium min-w-[100px]">Phone:</p>
+                    <p className="font-light">
                       {activeBooking?.booking?.user?.phone_number ||
-                        'not defined'}
+                        "not defined"}
                     </p>
                   </div>
                 </div>
-                <div className='flex gap-2 mt-2'>
-                  <p className='font-medium min-w-[100px]'>Status:</p>
-                  <p className='font-light'>{activeBooking?.booking?.status}</p>
+                <div className="flex gap-2 mt-2">
+                  <p className="font-medium min-w-[100px]">Status:</p>
+                  <p className="font-light">{activeBooking?.booking?.status}</p>
                 </div>
-                <div className='flex gap-2'>
-                  <p className='font-medium min-w-[100px]'>Start time:</p>
-                  <p className='font-light'>
+                <div className="flex gap-2">
+                  <p className="font-medium min-w-[100px]">Start time:</p>
+                  <p className="font-light">
                     {DateTime.fromISO(activeBooking?.booking?.startTime)
                       .toUTC()
-                      .toFormat('HH:mm')}
+                      .toFormat("HH:mm")}
                   </p>
                 </div>
-                <div className='flex gap-2'>
-                  <p className='font-medium min-w-[100px]'>End time:</p>
-                  <p className='font-light'>
+                <div className="flex gap-2">
+                  <p className="font-medium min-w-[100px]">End time:</p>
+                  <p className="font-light">
                     {DateTime.fromISO(activeBooking?.booking?.endTime)
                       .toUTC()
-                      .toFormat('HH:mm')}
+                      .toFormat("HH:mm")}
                   </p>
                 </div>
               </div>
-              <div className='col-span-1'>
-                <div className='flex gap-2'>
-                  <p className='font-medium min-w-[100px]'>Room:</p>
-                  <p className='font-light'>{activeBooking?.room?.name}</p>
+              <div className="col-span-1">
+                <div className="flex gap-2">
+                  <p className="font-medium min-w-[100px]">Room:</p>
+                  <p className="font-light">{activeBooking?.room?.name}</p>
                 </div>
-                <div className='flex gap-2'>
-                  <p className='font-medium min-w-[100px]'>Capacity:</p>
-                  <p className='font-light'>{activeBooking?.room?.capacity}</p>
+                <div className="flex gap-2">
+                  <p className="font-medium min-w-[100px]">Capacity:</p>
+                  <p className="font-light">{activeBooking?.room?.capacity}</p>
                 </div>
               </div>
-              <div className='col-span-1 grid-rows-3 grid max-w-[200px]'>
+              <div className="col-span-1 grid-rows-3 grid max-w-[200px]">
                 {activeBooking && (
                   <Button
                     onClick={() => setShowChangeBookingModal(true)}
-                    className=' bg-kb-primary hover:bg-kb-secondary'
+                    className=" bg-kb-primary hover:bg-kb-secondary"
                   >
                     Change Booking
                   </Button>
@@ -499,8 +501,17 @@ const Page: React.FC = () => {
 
                 {activeBooking && (
                   <Button
+                    onClick={() => setShowNotesModal(true)}
+                    className="bg-kb-primary hover:bg-kb-secondary"
+                  >
+                    Notes
+                  </Button>
+                )}
+
+                {activeBooking && (
+                  <Button
                     onClick={() => setShowDeleteBookingModal(true)}
-                    className=' bg-kb-primary hover:bg-kb-secondary'
+                    className=" bg-kb-primary hover:bg-kb-secondary"
                   >
                     Delete
                   </Button>
@@ -546,6 +557,14 @@ const Page: React.FC = () => {
             setShowModal={setShowDeleteBookingModal}
             bookingId={activeBooking.booking.id}
             setActiveBooking={setActiveBooking}
+          />
+        )}
+
+        {showNotesModal && activeBooking && (
+          <NotesModal
+            showModal={showNotesModal}
+            setShowModal={setShowNotesModal}
+            bookingId={activeBooking.booking.id}
           />
         )}
       </div>
