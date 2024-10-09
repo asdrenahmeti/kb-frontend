@@ -22,8 +22,6 @@ export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  console.log("SESSION FROM DASHBOARD:",session)
-
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login');

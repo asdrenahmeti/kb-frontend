@@ -65,16 +65,19 @@ const Booking: React.FC<BookingProps> = ({
     startTime: string,
     startHour: string
   ): number => {
-    const startDateTime = DateTime.fromFormat(startHour, "HH:mm", {
+    const startTimeObj = DateTime.fromISO(startTime, { zone: "utc" });
+    const startDate = startTimeObj.toISODate();
+    let startHourObj = DateTime.fromISO(`${startDate}T${startHour}:00.000Z`, {
       zone: "utc",
     });
-    const bookingStartDateTime = DateTime.fromISO(startTime, { zone: "utc" });
 
-    const minutesFromStart = bookingStartDateTime.diff(
-      startDateTime,
-      "minutes"
-    ).minutes;
-    const leftPosition = (minutesFromStart / 5) * 30; // Assuming 30px per 5-minute interval
+    // Adjust for cases where the start time is before the start hour
+    if (startTimeObj < startHourObj) {
+      startHourObj = startHourObj.minus({ days: 1 });
+    }
+
+    const diffInMinutes = startTimeObj.diff(startHourObj, "minutes").minutes;
+    const leftPosition = (diffInMinutes / 5) * 30;
 
     return leftPosition;
   };
