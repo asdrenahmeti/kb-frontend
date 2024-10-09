@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useForm } from "react-hook-form";
 import {
@@ -163,6 +163,8 @@ const BookingForm: React.FC = () => {
       }
     }
   };
+
+  console.log(date)
 
   return (
     <div className="mb-8">
@@ -336,10 +338,6 @@ const BookingForm: React.FC = () => {
         </div>
       </div>
 
-
-
-      
-
       {/* {bookingModal && (
         <RoomBookingModal
           setBookingModal={setBookingModal}
@@ -355,8 +353,8 @@ const BookingForm: React.FC = () => {
 
       {bookingModal && (
         <RoomBookingModal
-        setBookingModal={setBookingModal}
-        bookingModal={bookingModal}
+          setBookingModal={setBookingModal}
+          bookingModal={bookingModal}
           roomId={selectedRoom}
           booking={{
             startTime: selectedStartTime,

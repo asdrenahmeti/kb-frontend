@@ -81,6 +81,8 @@ export default function RoomBookingModal({
   const [currentStep, setCurrentStep] = useState("customer");
   const [isDialogOpen, setIsDialogOpen] = useState(true);
 
+  console.log(booking);
+
   const {
     register,
     handleSubmit,
@@ -126,12 +128,19 @@ export default function RoomBookingModal({
         minute: parseInt(minuteTime),
       }).toISO({ includeOffset: false }) + "Z";
 
-    const isoDate = new Date(
-      new Date("Wed Oct 09 2024 23:09:08 GMT+0200").setUTCHours(0, 0, 0, 0)
-    ).toISOString();
+    let inputDate =
+      booking.date;
+
+    let jsDate = new Date(inputDate);
+
+    let dt = DateTime.fromJSDate(jsDate).setZone("utc", {
+      keepLocalTime: true,
+    });
+
+    let outputDate = dt.toISO();
 
     const bookingData: BookingData = {
-      date: isoDate,
+      date: outputDate,
       email: data.email,
       endTime: formattedEndTime,
       firstName: data.firstName,
