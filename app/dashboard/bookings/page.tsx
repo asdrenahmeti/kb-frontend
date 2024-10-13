@@ -30,6 +30,7 @@ import ChangeBookingModal from "./ChangeBookingModal";
 import { toast } from "sonner";
 import DeleteBookingModal from "./DeleteBookingModal";
 import NotesModal from "./NotesModal";
+import { useSession } from "next-auth/react";
 
 interface BookingData {
   id: string;
@@ -83,6 +84,8 @@ const Page: React.FC = () => {
   const [showDeleteBookingModal, setShowDeleteBookingModal] =
     useState<boolean>(false);
   const [showNotesModal, setShowNotesModal] = useState<boolean>(false);
+  const { data: session, status } = useSession();
+
 
   const currentDate = date ? DateTime.fromJSDate(date).toISODate() : "";
 
@@ -168,6 +171,7 @@ const Page: React.FC = () => {
       endTime: endDateTime.toISO({ includeOffset: false }) + "Z",
       date: startDateTime.toISODate() + "T00:00:00.000Z", // Ensure the date is in ISO-8601 format with 'Z'
       roomId, // Ensure the new roomId is included
+      userId: session?.user?.id,
       ...rest,
     };
 

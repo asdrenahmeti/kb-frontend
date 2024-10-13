@@ -52,6 +52,7 @@ type BookingData = {
   phoneNumber: string;
   roomId: string;
   startTime: string;
+  makeMeMember: boolean;
 };
 
 const fetchRoomData = async (roomId: any) => {
@@ -81,8 +82,6 @@ export default function RoomBookingModal({
   const [currentStep, setCurrentStep] = useState("customer");
   const [isDialogOpen, setIsDialogOpen] = useState(true);
 
-  console.log(booking);
-
   const {
     register,
     handleSubmit,
@@ -109,7 +108,7 @@ export default function RoomBookingModal({
   const onSubmit = (data: any) => {
     const [hour, minute] = booking?.startTime.split(":");
     const [hourTime, minuteTime] = booking?.endTime?.split(":");
-
+  
     const formattedStartTime =
       DateTime.fromObject({
         year: booking.date.getFullYear(),
@@ -118,7 +117,7 @@ export default function RoomBookingModal({
         hour: parseInt(hour),
         minute: parseInt(minute),
       }).toISO({ includeOffset: false }) + "Z";
-
+  
     const formattedEndTime =
       DateTime.fromObject({
         year: booking.date.getFullYear(),
@@ -127,31 +126,42 @@ export default function RoomBookingModal({
         hour: parseInt(hourTime),
         minute: parseInt(minuteTime),
       }).toISO({ includeOffset: false }) + "Z";
-
-    let inputDate =
-      booking.date;
-
+  
+    let inputDate = booking.date;
+  
+    // Convert the input date to a JavaScript Date object
     let jsDate = new Date(inputDate);
-
-    let dt = DateTime.fromJSDate(jsDate).setZone("utc", {
-      keepLocalTime: true,
-    });
-
+  
+    // Extract the year, month, and day explicitly, and then set the time to UTC manually
+    let dt = DateTime.fromObject(
+      {
+        year: jsDate.getFullYear(),
+        month: jsDate.getMonth() + 1, // getMonth is zero-based
+        day: jsDate.getDate(),
+        hour: 0,
+        minute: 0,
+        second: 0,
+      },
+      { zone: "utc" }
+    );
+  
     let outputDate = dt.toISO();
-
+  
     const bookingData: BookingData = {
       date: outputDate,
       email: data.email,
       endTime: formattedEndTime,
       firstName: data.firstName,
       lastName: data.surname,
-      phoneNumber: data.phoneNumber,
+      phoneNumber: data.phone,
       roomId: roomId,
       startTime: formattedStartTime,
+      makeMeMember: !!data.makeMeMember
     };
-
+  
     mutation.mutate(bookingData);
   };
+  
 
   const { data: roomData, isLoading } = useQuery({
     queryKey: ["room", roomId],
@@ -345,7 +355,7 @@ export default function RoomBookingModal({
                     )}
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Checkbox id="member" {...register("member")} />
+                    <Checkbox id="member" {...register("makeMeMember")} />
                     <Label htmlFor="member">Become a member?</Label>
                   </div>
                 </div>

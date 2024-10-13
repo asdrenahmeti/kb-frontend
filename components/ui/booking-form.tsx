@@ -164,8 +164,6 @@ const BookingForm: React.FC = () => {
     }
   };
 
-  console.log(date)
-
   return (
     <div className="mb-8">
       <form

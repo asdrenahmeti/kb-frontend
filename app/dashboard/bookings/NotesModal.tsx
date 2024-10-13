@@ -74,13 +74,98 @@ const NotesModal: React.FC<NotesModalProps> = ({
         </DialogHeader>
         <div className="space-y-4">
           {notes?.map((note: any, index: number) => (
-            <div key={index} className="flex flex-col bg-gray-100 p-2 rounded">
-              {note.content}
-              <div className="flex justify-between">
-                <p className="text-xs">
-                  {note?.user?.firstName + " " + note?.user?.lastName}
+            <div
+              key={index}
+              className={`flex flex-col p-2 rounded mb-2 ${
+                note.content === "CREATED" || note.content === "UPDATED"
+                  ? "bg-kb-primary/70 text-white"
+                  : "bg-gray-300"
+              }`}
+            >
+              <div className="mb-1">
+                <p
+                  className={`text-sm ${
+                    note.content === "CREATED" || note.content === "UPDATED"
+                      ? "font-bold"
+                      : ""
+                  }`}
+                >
+                  {note.content}
                 </p>
-                <p className="text-xs">
+              </div>
+
+              {note.metadata && (
+                <>
+                  <ul className="text-sm">
+                    {note.metadata.date && (
+                      <li>
+                        <b>Date:</b>{" "}
+                        <span className="inline-block px-1 bg-red-600 text-white rounded-md font-bold">
+                          {DateTime.fromISO(note.metadata.date.old)
+                            .toLocal()
+                            .toFormat("yyyy-MM-dd")}
+                        </span>{" "}
+                        <b>to</b>{" "}
+                        <span className="inline-block px-1 bg-green-600 text-white rounded-md font-bold">
+                          {DateTime.fromISO(note.metadata.date.new)
+                            .toLocal()
+                            .toFormat("yyyy-MM-dd")}{" "}
+                        </span>
+                      </li>
+                    )}
+                    {note.metadata.roomId && (
+                      <li>
+                        <b>Room:</b>{" "}
+                        <span className="inline-block px-1 bg-red-600 text-white rounded-md font-bold">
+                          {note.metadata.roomId.old.name}
+                        </span>{" "}
+                        to{" "}
+                        <span className="inline-block px-1 bg-green-600 text-white rounded-md font-bold">
+                          {note.metadata.roomId.new.name}{" "}
+                        </span>
+                      </li>
+                    )}
+                    {note.metadata.startTime && (
+                      <li>
+                        <b>Start time:</b>{" "}
+                        <span className="inline-block px-1 bg-red-600 text-white rounded-md font-bold">
+                          {DateTime.fromISO(note.metadata.startTime.old)
+                            .toLocal()
+                            .toFormat("HH:mm")}
+                        </span>{" "}
+                        to{" "}
+                        <span className="inline-block px-1 bg-green-600 text-white rounded-md font-bold">
+                          {DateTime.fromISO(note.metadata.startTime.new)
+                            .toLocal()
+                            .toFormat("HH:mm")}
+                        </span>
+                      </li>
+                    )}
+                    {note.metadata.endTime && (
+                      <li className="mt-1">
+                        <b>End time:</b>{" "}
+                        <span className="inline-block px-1 bg-red-600 text-white rounded-md font-bold">
+                          {DateTime.fromISO(note.metadata.endTime.old)
+                            .toLocal()
+                            .toFormat("HH:mm")}
+                        </span>{" "}
+                        to{" "}
+                        <span className="inline-block px-1 bg-green-600 text-white rounded-md font-bold">
+                          {DateTime.fromISO(note.metadata.endTime.new)
+                            .toLocal()
+                            .toFormat("HH:mm")}
+                        </span>
+                      </li>
+                    )}
+                  </ul>
+                </>
+              )}
+
+              <div className="flex justify-between text-xs mt-3">
+                <p>
+                  {note?.user?.firstName + " " + (note?.user?.lastName ?? "")}
+                </p>
+                <p>
                   {DateTime.fromISO(note.updatedAt)
                     .toLocal()
                     .toFormat("yyyy-MM-dd HH:mm")}
@@ -88,6 +173,7 @@ const NotesModal: React.FC<NotesModalProps> = ({
               </div>
             </div>
           ))}
+
           <div className="flex space-x-2">
             <Input
               value={newNote}

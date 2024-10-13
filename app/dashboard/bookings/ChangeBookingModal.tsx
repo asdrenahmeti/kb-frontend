@@ -15,6 +15,7 @@ import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup } from '@/components/ui/select';
+import { useSession } from 'next-auth/react';
 
 interface ChangeBookingModalProps {
   showModal: boolean;
@@ -30,6 +31,7 @@ const ChangeBookingModal: React.FC<ChangeBookingModalProps> = ({
   booking
 }) => {
   const queryClient = useQueryClient();
+  const { data: session, status } = useSession();
 
   const [startTime, setStartTime] = useState(
     booking?.startTime ? booking.startTime.substring(11, 16) : ''
@@ -54,19 +56,22 @@ const ChangeBookingModal: React.FC<ChangeBookingModalProps> = ({
       startTime,
       endTime,
       date,
-      roomId
+      roomId,
+      userId
     }: {
       id: string;
       startTime: string;
       endTime: string;
       date: string;
       roomId: string;
+      userId: string
     }) => {
       return axios.patch(`${process.env.NEXT_PUBLIC_BASE_URL}/bookings/${id}`, {
         startTime,
         endTime,
         date,
-        roomId
+        roomId,
+        userId
       });
     },
     onSuccess: res => {
@@ -118,7 +123,8 @@ const ChangeBookingModal: React.FC<ChangeBookingModalProps> = ({
         DateTime.fromJSDate(date)
           .set({ hour: 0, minute: 0, second: 0, millisecond: 0 })
           .toISO({ includeOffset: false }) + 'Z',
-      roomId: room
+      roomId: room,
+      userId: session?.user?.id
     };
 
     mutation.mutate(updatedBooking);
