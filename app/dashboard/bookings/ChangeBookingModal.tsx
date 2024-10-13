@@ -1,21 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Calendar } from '@/components/ui/calendar';
-import { DateTime } from 'luxon';
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import axios from 'axios';
-import { toast } from 'sonner';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup } from '@/components/ui/select';
-import { useSession } from 'next-auth/react';
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
+import { DateTime } from "luxon";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SelectGroup,
+} from "@/components/ui/select";
+import { useSession } from "next-auth/react";
 
 interface ChangeBookingModalProps {
   showModal: boolean;
@@ -28,26 +35,28 @@ const ChangeBookingModal: React.FC<ChangeBookingModalProps> = ({
   showModal,
   setShowModal,
   setActiveBooking,
-  booking
+  booking,
 }) => {
   const queryClient = useQueryClient();
   const { data: session, status } = useSession();
 
   const [startTime, setStartTime] = useState(
-    booking?.startTime ? booking.startTime.substring(11, 16) : ''
+    booking?.startTime ? booking.startTime.substring(11, 16) : ""
   );
   const [endTime, setEndTime] = useState(
-    booking?.endTime ? booking.endTime.substring(11, 16) : ''
+    booking?.endTime ? booking.endTime.substring(11, 16) : ""
   );
   const [date, setDate] = useState<Date | undefined>(new Date(booking?.date));
-  const [room, setRoom] = useState(booking?.roomId || '');
+  const [room, setRoom] = useState(booking?.roomId || "");
 
   const { data: rooms, isLoading: roomsLoading } = useQuery({
-    queryKey: ['rooms'],
+    queryKey: ["rooms"],
     queryFn: async () => {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URL}/rooms`);
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/rooms`
+      );
       return response.data;
-    }
+    },
   });
 
   const mutation = useMutation({
@@ -57,45 +66,45 @@ const ChangeBookingModal: React.FC<ChangeBookingModalProps> = ({
       endTime,
       date,
       roomId,
-      userId
+      userId,
     }: {
       id: string;
       startTime: string;
       endTime: string;
       date: string;
       roomId: string;
-      userId: string
+      userId: string;
     }) => {
       return axios.patch(`${process.env.NEXT_PUBLIC_BASE_URL}/bookings/${id}`, {
         startTime,
         endTime,
         date,
         roomId,
-        userId
+        userId,
       });
     },
-    onSuccess: res => {
+    onSuccess: (res) => {
       setActiveBooking(null);
-      queryClient.invalidateQueries({ queryKey: ['bookings'] });
-      toast.success('Booking updated successfully');
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      toast.success("Booking updated successfully");
     },
-    onError: error => {
+    onError: (error) => {
       if (axios.isAxiosError(error) && error.response) {
         toast.error(
           `${(error?.response?.data as { message?: string })?.message}`,
           {
-            position: 'top-center'
+            position: "top-center",
           }
         );
       } else {
-        console.error('An error occurred:', error.message);
+        console.error("An error occurred:", error.message);
       }
-    }
+    },
   });
 
   const handleSubmit = () => {
-    const [startHour, startMinute] = startTime.split(':');
-    const [endHour, endMinute] = endTime.split(':');
+    const [startHour, startMinute] = startTime.split(":");
+    const [endHour, endMinute] = endTime.split(":");
 
     const formattedStartTime =
       DateTime.fromObject({
@@ -103,8 +112,8 @@ const ChangeBookingModal: React.FC<ChangeBookingModalProps> = ({
         month: date.getMonth() + 1,
         day: date.getDate(),
         hour: parseInt(startHour),
-        minute: parseInt(startMinute)
-      }).toISO({ includeOffset: false }) + 'Z';
+        minute: parseInt(startMinute),
+      }).toISO({ includeOffset: false }) + "Z";
 
     const formattedEndTime =
       DateTime.fromObject({
@@ -112,8 +121,8 @@ const ChangeBookingModal: React.FC<ChangeBookingModalProps> = ({
         month: date.getMonth() + 1,
         day: date.getDate(),
         hour: parseInt(endHour),
-        minute: parseInt(endMinute)
-      }).toISO({ includeOffset: false }) + 'Z';
+        minute: parseInt(endMinute),
+      }).toISO({ includeOffset: false }) + "Z";
 
     const updatedBooking = {
       id: booking.id,
@@ -122,9 +131,9 @@ const ChangeBookingModal: React.FC<ChangeBookingModalProps> = ({
       date:
         DateTime.fromJSDate(date)
           .set({ hour: 0, minute: 0, second: 0, millisecond: 0 })
-          .toISO({ includeOffset: false }) + 'Z',
+          .toISO({ includeOffset: false }) + "Z",
       roomId: room,
-      userId: session?.user?.id
+      userId: session?.user?.id,
     };
 
     mutation.mutate(updatedBooking);
@@ -138,52 +147,53 @@ const ChangeBookingModal: React.FC<ChangeBookingModalProps> = ({
           <DialogTitle>Change Booking</DialogTitle>
           <DialogDescription>Update the booking details</DialogDescription>
         </DialogHeader>
-        <div className='grid gap-4 py-4'>
-          <div className='grid grid-cols-4 items-center gap-4'>
-            <label htmlFor='startTime' className='text-left'>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <label htmlFor="startTime" className="text-left">
               Start Time
             </label>
             <Input
-              id='startTime'
-              type='time'
+              id="startTime"
+              type="time"
               value={startTime}
-              onChange={e => setStartTime(e.target.value)}
-              placeholder='--:--'
-              className='col-span-3 focus:outline-none focus:ring-0'
+              onChange={(e) => setStartTime(e.target.value)}
+              placeholder="--:--"
+              step={60}
+              className="col-span-3 focus:outline-none focus:ring-0"
             />
           </div>
-          <div className='grid grid-cols-4 items-center gap-4'>
-            <label htmlFor='endTime' className='text-left'>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <label htmlFor="endTime" className="text-left">
               End Time
             </label>
             <Input
-              id='endTime'
-              type='time'
+              id="endTime"
+              type="time"
               value={endTime}
-              onChange={e => setEndTime(e.target.value)}
-              placeholder='--:--'
-              className='col-span-3 focus:outline-none focus:ring-0'
+              onChange={(e) => setEndTime(e.target.value)}
+              placeholder="--:--"
+              className="col-span-3 focus:outline-none focus:ring-0"
             />
           </div>
-          <div className='grid grid-cols-4 items-center gap-4'>
-            <label htmlFor='date' className='text-left'>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <label htmlFor="date" className="text-left">
               Date
             </label>
             <Calendar
-              mode='single'
+              mode="single"
               selected={date}
               onSelect={setDate}
               initialFocus
-              className='col-span-3'
+              className="col-span-3"
             />
           </div>
-          <div className='grid grid-cols-4 items-center gap-4'>
-            <label htmlFor='room' className='text-left'>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <label htmlFor="room" className="text-left">
               Room
             </label>
             <Select onValueChange={setRoom} value={room}>
-              <SelectTrigger className='col-span-3'>
-                <SelectValue placeholder='Select a room' />
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select a room" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
@@ -199,7 +209,7 @@ const ChangeBookingModal: React.FC<ChangeBookingModalProps> = ({
         </div>
         <DialogFooter>
           <Button onClick={handleSubmit}>Save</Button>
-          <Button onClick={() => setShowModal(false)} variant='secondary'>
+          <Button onClick={() => setShowModal(false)} variant="secondary">
             Cancel
           </Button>
         </DialogFooter>

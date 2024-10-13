@@ -101,15 +101,15 @@ const NotesModal: React.FC<NotesModalProps> = ({
                       <li>
                         <b>Date:</b>{" "}
                         <span className="inline-block px-1 bg-red-600 text-white rounded-md font-bold">
-                          {DateTime.fromISO(note.metadata.date.old)
-                            .toLocal()
-                            .toFormat("yyyy-MM-dd")}
+                          {DateTime.fromISO(note.metadata.date.old).toFormat(
+                            "yyyy-MM-dd"
+                          )}
                         </span>{" "}
                         <b>to</b>{" "}
                         <span className="inline-block px-1 bg-green-600 text-white rounded-md font-bold">
-                          {DateTime.fromISO(note.metadata.date.new)
-                            .toLocal()
-                            .toFormat("yyyy-MM-dd")}{" "}
+                          {DateTime.fromISO(note.metadata.date.new).toFormat(
+                            "yyyy-MM-dd"
+                          )}{" "}
                         </span>
                       </li>
                     )}
@@ -130,13 +130,13 @@ const NotesModal: React.FC<NotesModalProps> = ({
                         <b>Start time:</b>{" "}
                         <span className="inline-block px-1 bg-red-600 text-white rounded-md font-bold">
                           {DateTime.fromISO(note.metadata.startTime.old)
-                            .toLocal()
+                            .setZone("UTC") // Set timezone to UTC
                             .toFormat("HH:mm")}
                         </span>{" "}
                         to{" "}
                         <span className="inline-block px-1 bg-green-600 text-white rounded-md font-bold">
                           {DateTime.fromISO(note.metadata.startTime.new)
-                            .toLocal()
+                            .setZone("UTC") // Set timezone to UTC
                             .toFormat("HH:mm")}
                         </span>
                       </li>
@@ -146,13 +146,13 @@ const NotesModal: React.FC<NotesModalProps> = ({
                         <b>End time:</b>{" "}
                         <span className="inline-block px-1 bg-red-600 text-white rounded-md font-bold">
                           {DateTime.fromISO(note.metadata.endTime.old)
-                            .toLocal()
+                            .setZone("UTC") // Set timezone to UTC
                             .toFormat("HH:mm")}
                         </span>{" "}
                         to{" "}
                         <span className="inline-block px-1 bg-green-600 text-white rounded-md font-bold">
                           {DateTime.fromISO(note.metadata.endTime.new)
-                            .toLocal()
+                            .setZone("UTC") // Set timezone to UTC
                             .toFormat("HH:mm")}
                         </span>
                       </li>
