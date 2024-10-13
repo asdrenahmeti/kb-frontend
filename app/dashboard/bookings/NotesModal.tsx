@@ -72,7 +72,7 @@ const NotesModal: React.FC<NotesModalProps> = ({
         <DialogHeader>
           <DialogTitle>Notes for Booking</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="space-y-4 max-h-[60vh] overflow-y-auto">
           {notes?.map((note: any, index: number) => (
             <div
               key={index}
@@ -174,7 +174,7 @@ const NotesModal: React.FC<NotesModalProps> = ({
             </div>
           ))}
 
-          <div className="flex space-x-2">
+          <div className="flex p-4 gap-4 absolute bottom-0 w-full bg-white left-0">
             <Input
               value={newNote}
               onChange={(e) => setNewNote(e.target.value)}
