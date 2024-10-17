@@ -33,6 +33,11 @@ const navigation = [
     icon: FolderIcon
   },
   {
+    name: 'Songs',
+    href: '/dashboard/songs',
+    icon: UsersIcon
+  },
+  {
     name: 'Users',
     href: '/dashboard/users',
     icon: UsersIcon
